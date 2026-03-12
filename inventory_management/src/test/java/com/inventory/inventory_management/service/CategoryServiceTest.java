@@ -65,10 +65,9 @@ class CategoryServiceTest {
 
         // Act & Assert
         IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
-            () -> categoryService.createCategory(testCategoryDTO)
-        );
-        
+                IllegalArgumentException.class,
+                () -> categoryService.createCategory(testCategoryDTO));
+
         assertTrue(exception.getMessage().contains("already exists"));
         verify(categoryRepository, never()).save(any(Category.class));
     }
@@ -114,10 +113,9 @@ class CategoryServiceTest {
 
         // Act & Assert
         ResourceNotFoundException exception = assertThrows(
-            ResourceNotFoundException.class,
-            () -> categoryService.getCategoryById(999L)
-        );
-        
+                ResourceNotFoundException.class,
+                () -> categoryService.getCategoryById(999L));
+
         assertTrue(exception.getMessage().contains("not found"));
     }
 
