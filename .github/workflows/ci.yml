@@ -37,9 +37,11 @@ jobs:
           cache: maven
 
       - name: Build with Maven
+        working-directory: ./inventory_management
         run: mvn -B clean compile --file pom.xml
 
       - name: Run tests
+        working-directory: ./inventory_management
         run: mvn -B test --file pom.xml
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5433/mydatabase
@@ -47,6 +49,7 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: secret
 
       - name: Generate test report
+        working-directory: ./inventory_management
         if: always()
         run: |
           if [ -d "target/surefire-reports" ]; then
@@ -59,13 +62,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: target/surefire-reports/
+          path: inventory_management/target/surefire-reports/
 
       - name: Package application
+        working-directory: ./inventory_management
         run: mvn -B package -DskipTests --file pom.xml
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: inventory-management-jar
-          path: target/*.jar
+          path: inventory_management/target/*.jar
