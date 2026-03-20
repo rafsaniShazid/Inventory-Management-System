@@ -1,28 +1,44 @@
 package com.inventory.inventory_management.service;
 
-import com.inventory.inventory_management.dto.CategoryDTO;
-import com.inventory.inventory_management.dto.CategoryResponseDTO;
-import com.inventory.inventory_management.entity.Category;
-import com.inventory.inventory_management.exception.ResourceNotFoundException;
-import com.inventory.inventory_management.repository.CategoryRepository;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import com.inventory.inventory_management.dto.CategoryDTO;
+import com.inventory.inventory_management.dto.CategoryResponseDTO;
+import com.inventory.inventory_management.dto.DtoMapper;
+import com.inventory.inventory_management.entity.Category;
+import com.inventory.inventory_management.exception.ResourceNotFoundException;
+import com.inventory.inventory_management.repository.CategoryRepository;
 
 @ExtendWith(MockitoExtension.class)
 class CategoryServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private DtoMapper dtoMapper;
 
     @InjectMocks
     private CategoryService categoryService;
@@ -36,6 +52,15 @@ class CategoryServiceTest {
         testCategory.setCategoryId(1L);
         testCategory.setCategoryName("Electronics");
         testCategory.setDescription("Electronic items");
+
+        // Stub mapper once for all tests that return mapped category responses.
+        lenient().when(dtoMapper.toCategoryResponseDTO(any(Category.class))).thenAnswer(invocation -> {
+            Category category = invocation.getArgument(0);
+            return new CategoryResponseDTO(
+                    category.getCategoryId(),
+                    category.getCategoryName(),
+                    category.getDescription());
+        });
 
         testCategoryDTO = new CategoryDTO();
         testCategoryDTO.setCategoryName("Electronics");
