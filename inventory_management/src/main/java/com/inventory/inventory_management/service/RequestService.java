@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.inventory.inventory_management.dto.DtoMapper;
 import com.inventory.inventory_management.dto.RequestDTO;
 import com.inventory.inventory_management.dto.RequestResponseDTO;
 import com.inventory.inventory_management.dto.ReviewRequestDTO;
@@ -37,6 +38,7 @@ public class RequestService {
 
     private final RequestRepository requestRepository;
     private final ItemRepository itemRepository;
+    private final DtoMapper dtoMapper;
 
     /**
      * SUBMIT a new request
@@ -58,7 +60,7 @@ public class RequestService {
         request.setRequesterEmail(requestDTO.getRequesterEmail());
         // status and requestedAt are set by @PrePersist in entity
 
-        return toResponseDTO(requestRepository.save(request));
+        return dtoMapper.toRequestResponseDTO(requestRepository.save(request));
     }
 
     /**
@@ -98,7 +100,7 @@ public class RequestService {
         request.setReviewedAt(LocalDateTime.now());
         request.setReviewRemarks(reviewDTO.getReviewRemarks());
 
-        return toResponseDTO(requestRepository.save(request));
+        return dtoMapper.toRequestResponseDTO(requestRepository.save(request));
     }
 
     /**
@@ -108,7 +110,7 @@ public class RequestService {
     public List<RequestResponseDTO> getAllRequests() {
         return requestRepository.findAll()
                 .stream()
-                .map(this::toResponseDTO)
+                .map(dtoMapper::toRequestResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -120,7 +122,7 @@ public class RequestService {
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Request not found with ID: " + requestId));
-        return toResponseDTO(request);
+        return dtoMapper.toRequestResponseDTO(request);
     }
 
     /**
@@ -130,7 +132,7 @@ public class RequestService {
     public List<RequestResponseDTO> getRequestsByStatus(RequestStatus status) {
         return requestRepository.findByStatus(status)
                 .stream()
-                .map(this::toResponseDTO)
+                .map(dtoMapper::toRequestResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -144,7 +146,7 @@ public class RequestService {
         }
         return requestRepository.findByItemItemId(itemId)
                 .stream()
-                .map(this::toResponseDTO)
+                .map(dtoMapper::toRequestResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -155,7 +157,7 @@ public class RequestService {
     public List<RequestResponseDTO> getRequestsByEmail(String email) {
         return requestRepository.findByRequesterEmail(email)
                 .stream()
-                .map(this::toResponseDTO)
+                .map(dtoMapper::toRequestResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -175,19 +177,5 @@ public class RequestService {
     }
 
     // ─── Helper ──────────────────────────────────────────────────────────────
-
-    private RequestResponseDTO toResponseDTO(Request request) {
-        return new RequestResponseDTO(
-                request.getRequestId(),
-                request.getItem().getItemId(),
-                request.getItem().getItemName(),
-                request.getRequestedQuantity(),
-                request.getRequesterName(),
-                request.getRequesterEmail(),
-                request.getStatus(),
-                request.getRequestedAt(),
-                request.getReviewedAt(),
-                request.getReviewRemarks()
-        );
-    }
 }
+

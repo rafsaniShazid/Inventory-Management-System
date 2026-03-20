@@ -1,16 +1,19 @@
 package com.inventory.inventory_management.service;
 
-import com.inventory.inventory_management.dto.CategoryDTO;
-import com.inventory.inventory_management.dto.CategoryResponseDTO;
-import com.inventory.inventory_management.entity.Category;
-import com.inventory.inventory_management.exception.ResourceNotFoundException;
-import com.inventory.inventory_management.repository.CategoryRepository;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import com.inventory.inventory_management.dto.CategoryDTO;
+import com.inventory.inventory_management.dto.CategoryResponseDTO;
+import com.inventory.inventory_management.dto.DtoMapper;
+import com.inventory.inventory_management.entity.Category;
+import com.inventory.inventory_management.exception.ResourceNotFoundException;
+import com.inventory.inventory_management.repository.CategoryRepository;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * CATEGORY SERVICE (Member 1 - YOUR MODULE!)
@@ -37,6 +40,7 @@ import java.util.stream.Collectors;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final DtoMapper dtoMapper;
 
     /**
      * CREATE new category
@@ -71,7 +75,7 @@ public class CategoryService {
         Category savedCategory = categoryRepository.save(category);
 
         // Convert Entity to ResponseDTO and return
-        return convertToResponseDTO(savedCategory);
+        return dtoMapper.toCategoryResponseDTO(savedCategory);
     }
 
     /**
@@ -84,7 +88,7 @@ public class CategoryService {
      */
     public List<CategoryResponseDTO> getAllCategories() {
         return categoryRepository.findAll().stream()
-                .map(this::convertToResponseDTO)
+                .map(dtoMapper::toCategoryResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -98,7 +102,7 @@ public class CategoryService {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + id));
 
-        return convertToResponseDTO(category);
+        return dtoMapper.toCategoryResponseDTO(category);
     }
 
     /**
@@ -128,7 +132,7 @@ public class CategoryService {
 
         // Save and return
         Category updatedCategory = categoryRepository.save(category);
-        return convertToResponseDTO(updatedCategory);
+        return dtoMapper.toCategoryResponseDTO(updatedCategory);
     }
 
     /**
@@ -151,19 +155,5 @@ public class CategoryService {
         categoryRepository.delete(category);
     }
 
-    /**
-     * HELPER METHOD: Convert Entity to ResponseDTO
-     * 
-     * WHY: Keep conversion logic in one place
-     * Easy to maintain and modify
-     */
-    private CategoryResponseDTO convertToResponseDTO(Category category) {
-        int itemCount = category.getItems() != null ? category.getItems().size() : 0;
-
-        return new CategoryResponseDTO(
-                category.getCategoryId(),
-                category.getCategoryName(),
-                category.getDescription(),
-                itemCount);
-    }
 }
+
