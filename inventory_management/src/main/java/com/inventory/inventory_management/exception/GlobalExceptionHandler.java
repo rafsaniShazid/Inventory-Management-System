@@ -1,15 +1,26 @@
 package com.inventory.inventory_management.exception;
 
-import com.inventory.inventory_management.dto.ApiResponseDTO;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException.Reference;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.inventory.inventory_management.dto.ApiResponseDTO;
 
 /**
  * GLOBAL EXCEPTION HANDLER
@@ -39,6 +50,8 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     /**
      * Handle ResourceNotFoundException
      * Returns 404 Not Found status
@@ -51,7 +64,7 @@ public class GlobalExceptionHandler {
 
     /**
      * Handle validation errors (from @Valid annotations in DTOs)
-     * Returns 400 Bad Request with field-specific errors
+      * Returns 400 Bad Request with field-specific errors inside ApiResponseDTO.data
      * 
      * EXAMPLE when user sends invalid data:
      * POST /items with body: {"itemName": "", "stockQuantity": -5}
@@ -59,23 +72,71 @@ public class GlobalExceptionHandler {
      * Response:
      * 400 Bad Request
      * {
-     * "itemName": "Item name is required",
-     * "stockQuantity": "Stock quantity cannot be negative"
+     * "success": false,
+     * "message": "Validation failed",
+     * "data": {
+     *   "itemName": "Item name is required",
+     *   "stockQuantity": "Stock quantity cannot be negative"
+     * }
      * }
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(
+    public ResponseEntity<ApiResponseDTO> handleValidationExceptions(
             MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
 
-        // Extract all field errors
+        // Extract all errors (both field-level and object-level)
         ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
+            if (error instanceof FieldError) {
+                FieldError fieldError = (FieldError) error;
+                errors.put(fieldError.getField(), error.getDefaultMessage());
+            } else if (error instanceof ObjectError) {
+                // Handle class-level constraints
+                errors.put(error.getObjectName(), error.getDefaultMessage());
+            } else {
+                errors.put("validation", error.getDefaultMessage());
+            }
         });
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+        ApiResponseDTO response = ApiResponseDTO.error("Validation failed");
+        response.setData(errors);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * Handle malformed JSON in request body
+     * Returns 400 Bad Request
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponseDTO> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+        Throwable cause = ex.getMostSpecificCause();
+
+        if (cause instanceof InvalidFormatException invalidFormatException
+                && invalidFormatException.getTargetType() != null
+                && invalidFormatException.getTargetType().isEnum()) {
+            return buildEnumParseErrorResponse(invalidFormatException);
+        }
+
+        String message = (cause instanceof JsonParseException)
+                ? "Malformed JSON: please check syntax (quotes, commas, brackets)."
+                : "Malformed request body: unable to read JSON payload.";
+
+        ApiResponseDTO response = ApiResponseDTO.error(message);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * Handle enum parse errors from request body
+     * Returns 400 Bad Request with allowed enum values
+     */
+    @ExceptionHandler(InvalidFormatException.class)
+    public ResponseEntity<ApiResponseDTO> handleInvalidFormat(InvalidFormatException ex) {
+        if (ex.getTargetType() != null && ex.getTargetType().isEnum()) {
+            return buildEnumParseErrorResponse(ex);
+        }
+
+        ApiResponseDTO response = ApiResponseDTO.error("Invalid value format in request body.");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     /**
@@ -93,14 +154,88 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle IllegalStateException
+     * Used for invalid operation state (e.g., reviewing non-PENDING request)
+     * Returns 400 Bad Request
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiResponseDTO> handleIllegalState(IllegalStateException ex) {
+        ApiResponseDTO response = ApiResponseDTO.error(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * Handle path/query parameter type mismatch (e.g., invalid enum in URL)
+     * Returns 400 Bad Request
+     * 
+     * EXAMPLE:
+     * GET /api/requests/status/INVALID_STATUS
+     * Response: Invalid value for 'status'. Allowed values: [PENDING, APPROVED, REJECTED]
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponseDTO> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        Class<?> requiredType = ex.getRequiredType();
+
+        if (requiredType != null && requiredType.isEnum()) {
+            String allowedValues = Arrays.stream(requiredType.getEnumConstants())
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(", "));
+
+            String message = "Invalid value for '" + ex.getName() + "'. Allowed values: [" + allowedValues + "]";
+
+            Map<String, Object> details = new HashMap<>();
+            details.put("parameter", ex.getName());
+            details.put("invalidValue", ex.getValue());
+            details.put("allowedValues", Arrays.stream(requiredType.getEnumConstants())
+                    .map(String::valueOf)
+                    .collect(Collectors.toList()));
+
+            ApiResponseDTO response = ApiResponseDTO.error(message);
+            response.setData(details);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        ApiResponseDTO response = ApiResponseDTO.error("Invalid value for parameter '" + ex.getName() + "'.");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
      * Handle all other exceptions
      * Returns 500 Internal Server Error
      * 
      * Catch-all for unexpected errors
+     * Logs detailed error server-side but returns generic message to client
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponseDTO> handleGenericException(Exception ex) {
-        ApiResponseDTO response = ApiResponseDTO.error("An error occurred: " + ex.getMessage());
+        logger.error("Unexpected exception occurred", ex);
+        ApiResponseDTO response = ApiResponseDTO.error("An unexpected error occurred. Please try again later.");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
+
+        private ResponseEntity<ApiResponseDTO> buildEnumParseErrorResponse(InvalidFormatException ex) {
+        String fieldPath = ex.getPath().stream()
+            .map(Reference::getFieldName)
+            .filter(fieldName -> fieldName != null && !fieldName.isBlank())
+            .collect(Collectors.joining("."));
+
+        String allowedValues = Arrays.stream(ex.getTargetType().getEnumConstants())
+            .map(String::valueOf)
+            .collect(Collectors.joining(", "));
+
+        String message = fieldPath.isBlank()
+            ? "Invalid enum value in request body. Allowed values: [" + allowedValues + "]"
+            : "Invalid value for '" + fieldPath + "'. Allowed values: [" + allowedValues + "]";
+
+        Map<String, Object> details = new HashMap<>();
+        details.put("field", fieldPath.isBlank() ? null : fieldPath);
+        details.put("invalidValue", ex.getValue());
+        details.put("allowedValues", Arrays.stream(ex.getTargetType().getEnumConstants())
+            .map(String::valueOf)
+            .collect(Collectors.toList()));
+
+        ApiResponseDTO response = ApiResponseDTO.error(message);
+        response.setData(details);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
 }

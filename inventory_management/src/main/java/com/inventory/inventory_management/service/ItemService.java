@@ -1,5 +1,12 @@
 package com.inventory.inventory_management.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.inventory.inventory_management.dto.DtoMapper;
 import com.inventory.inventory_management.dto.ItemDTO;
 import com.inventory.inventory_management.dto.ItemResponseDTO;
 import com.inventory.inventory_management.dto.UpdateStockDTO;
@@ -8,12 +15,8 @@ import com.inventory.inventory_management.entity.Item;
 import com.inventory.inventory_management.exception.ResourceNotFoundException;
 import com.inventory.inventory_management.repository.CategoryRepository;
 import com.inventory.inventory_management.repository.ItemRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 /**
  * ITEM SERVICE (Member 1 - YOUR MAIN MODULE!)
@@ -40,6 +43,7 @@ public class ItemService {
 
     private final ItemRepository itemRepository;
     private final CategoryRepository categoryRepository;
+    private final DtoMapper dtoMapper;
 
     /**
      * CREATE new item
@@ -89,7 +93,7 @@ public class ItemService {
         Item savedItem = itemRepository.save(item);
 
         // Return response DTO
-        return convertToResponseDTO(savedItem);
+        return dtoMapper.toItemResponseDTO(savedItem);
     }
 
     /**
@@ -104,7 +108,7 @@ public class ItemService {
      */
     public List<ItemResponseDTO> getAllItems() {
         return itemRepository.findAll().stream()
-                .map(this::convertToResponseDTO)
+                .map(dtoMapper::toItemResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -118,7 +122,7 @@ public class ItemService {
         Item item = itemRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Item not found with ID: " + id));
 
-        return convertToResponseDTO(item);
+        return dtoMapper.toItemResponseDTO(item);
     }
 
     /**
@@ -137,7 +141,7 @@ public class ItemService {
         }
 
         return itemRepository.findByCategoryCategoryId(categoryId).stream()
-                .map(this::convertToResponseDTO)
+                .map(dtoMapper::toItemResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -151,7 +155,7 @@ public class ItemService {
      */
     public List<ItemResponseDTO> searchItems(String searchTerm) {
         return itemRepository.findByItemNameContainingIgnoreCase(searchTerm).stream()
-                .map(this::convertToResponseDTO)
+                .map(dtoMapper::toItemResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -166,7 +170,7 @@ public class ItemService {
      */
     public List<ItemResponseDTO> getLowStockItems(Integer threshold) {
         return itemRepository.findByStockQuantityLessThan(threshold).stream()
-                .map(this::convertToResponseDTO)
+                .map(dtoMapper::toItemResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -210,7 +214,7 @@ public class ItemService {
 
         // Save and return
         Item updatedItem = itemRepository.save(item);
-        return convertToResponseDTO(updatedItem);
+        return dtoMapper.toItemResponseDTO(updatedItem);
     }
 
     /**
@@ -237,7 +241,7 @@ public class ItemService {
         item.setStockQuantity(stockDTO.getStockQuantity());
 
         Item updatedItem = itemRepository.save(item);
-        return convertToResponseDTO(updatedItem);
+        return dtoMapper.toItemResponseDTO(updatedItem);
     }
 
     /**
@@ -294,20 +298,5 @@ public class ItemService {
         Long total = itemRepository.getTotalStockCount();
         return total != null ? total : 0L;
     }
-
-    /**
-     * HELPER METHOD: Convert Entity to ResponseDTO
-     * 
-     * Includes category name (user-friendly!)
-     */
-    private ItemResponseDTO convertToResponseDTO(Item item) {
-        return new ItemResponseDTO(
-                item.getItemId(),
-                item.getItemName(),
-                item.getDescription(),
-                item.getStockQuantity(),
-                item.getCategory().getCategoryId(),
-                item.getCategory().getCategoryName() // Category name for display
-        );
-    }
 }
+
