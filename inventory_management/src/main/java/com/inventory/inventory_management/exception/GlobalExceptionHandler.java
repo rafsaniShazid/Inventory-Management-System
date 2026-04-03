@@ -3,6 +3,8 @@ package com.inventory.inventory_management.exception;
 import com.inventory.inventory_management.dto.ApiResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -90,6 +92,34 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponseDTO> handleIllegalArgument(IllegalArgumentException ex) {
         ApiResponseDTO response = ApiResponseDTO.error(ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * Handle IllegalStateException
+     * Used for invalid operation state transitions
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiResponseDTO> handleIllegalState(IllegalStateException ex) {
+        ApiResponseDTO response = ApiResponseDTO.error(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * Handle login failures
+     */
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ApiResponseDTO> handleBadCredentials(BadCredentialsException ex) {
+        ApiResponseDTO response = ApiResponseDTO.error("Invalid email or password");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    /**
+     * Handle role/permission failures
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponseDTO> handleAccessDenied(AccessDeniedException ex) {
+        ApiResponseDTO response = ApiResponseDTO.error("You do not have permission to access this resource");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
     /**
