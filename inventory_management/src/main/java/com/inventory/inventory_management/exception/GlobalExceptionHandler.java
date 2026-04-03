@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -155,8 +157,7 @@ public class GlobalExceptionHandler {
 
     /**
      * Handle IllegalStateException
-     * Used for invalid operation state (e.g., reviewing non-PENDING request)
-     * Returns 400 Bad Request
+     * Used for invalid operation state transitions
      */
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiResponseDTO> handleIllegalState(IllegalStateException ex) {
@@ -165,12 +166,26 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle login failures
+     */
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ApiResponseDTO> handleBadCredentials(BadCredentialsException ex) {
+        ApiResponseDTO response = ApiResponseDTO.error("Invalid email or password");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    /**
+     * Handle role/permission failures
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponseDTO> handleAccessDenied(AccessDeniedException ex) {
+        ApiResponseDTO response = ApiResponseDTO.error("You do not have permission to access this resource");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+    /**
      * Handle path/query parameter type mismatch (e.g., invalid enum in URL)
      * Returns 400 Bad Request
-     * 
-     * EXAMPLE:
-     * GET /api/requests/status/INVALID_STATUS
-     * Response: Invalid value for 'status'. Allowed values: [PENDING, APPROVED, REJECTED]
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponseDTO> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
