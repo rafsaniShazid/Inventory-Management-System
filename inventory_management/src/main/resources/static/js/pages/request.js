@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     loadItems();
     setupFormHandlers();
+    prefillRequesterInfo();
 });
 
 // ==================== Initialize Page ====================
@@ -30,6 +31,8 @@ async function loadItems() {
                 option.dataset.item = JSON.stringify(item);
                 itemSelect.appendChild(option);
             });
+
+            preselectItemFromQuery(itemSelect);
         }
     } catch (error) {
         console.error('Failed to load items:', error);
@@ -73,6 +76,62 @@ function setupFormHandlers() {
 
         await submitRequestForm();
     });
+}
+
+function prefillRequesterInfo() {
+    const authUser = typeof getAuthUser === 'function' ? getAuthUser() : null;
+    if (!authUser) {
+        return;
+    }
+
+    const nameInput = document.getElementById('requesterName');
+    const emailInput = document.getElementById('requesterEmail');
+
+    const fallbackName = deriveNameFromEmail(authUser.email);
+    if (nameInput) {
+        nameInput.value = (authUser.fullName || fallbackName || '').trim();
+        nameInput.readOnly = true;
+    }
+
+    if (emailInput && authUser.email) {
+        emailInput.value = authUser.email;
+        emailInput.readOnly = true;
+    }
+}
+
+function preselectItemFromQuery(itemSelect) {
+    const params = new URLSearchParams(window.location.search);
+    const itemId = params.get('itemId');
+
+    if (!itemId) {
+        return;
+    }
+
+    const hasOption = Array.from(itemSelect.options).some(option => option.value === itemId);
+    if (!hasOption) {
+        return;
+    }
+
+    itemSelect.value = itemId;
+    const selectedOption = itemSelect.options[itemSelect.selectedIndex];
+    if (selectedOption && selectedOption.dataset.item) {
+        const item = JSON.parse(selectedOption.dataset.item);
+        populateItemDetails(item);
+    }
+}
+
+function deriveNameFromEmail(email) {
+    if (!email || !email.includes('@')) {
+        return '';
+    }
+
+    const localPart = email.split('@')[0];
+    return localPart
+        .replace(/[._-]+/g, ' ')
+        .split(' ')
+        .filter(Boolean)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        .join(' ');
 }
 
 // ==================== Item Details ====================

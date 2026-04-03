@@ -39,9 +39,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (adminManageRequestsLink) {
             adminManageRequestsLink.style.display = authUser.role === 'ADMIN' ? '' : 'none';
         }
-        const emailText = authUser.email || 'Signed in';
+        const displayName = authUser.fullName || deriveNameFromEmail(authUser.email) || 'Signed in';
         const roleText = authUser.role ? ` (${authUser.role})` : '';
-        userText.textContent = `${emailText}${roleText}`;
+        userText.textContent = `${displayName}${roleText}`;
     } else {
         loginItem.style.display = '';
         logoutItem.style.display = 'none';
@@ -69,3 +69,17 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+function deriveNameFromEmail(email) {
+    if (!email || !email.includes('@')) {
+        return '';
+    }
+
+    const localPart = email.split('@')[0];
+    return localPart
+        .replace(/[._-]+/g, ' ')
+        .split(' ')
+        .filter(Boolean)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        .join(' ');
+}

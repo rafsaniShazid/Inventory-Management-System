@@ -1,108 +1,198 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<!doctype html>
+<html
+  xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:th="http://www.thymeleaf.org"
+  lang="en"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Request Item - Inventory Management</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/style.css}">
-</head>
-<body>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+  </head>
+  <body>
     <nav th:replace="~{fragments/header :: navbar}"></nav>
 
-    <main class="container-lg py-4">
-        <div class="row mb-4">
-            <div class="col-lg-8 offset-lg-2">
-                <h1>Request an Item</h1>
-                <p class="text-muted">Fill in the form below to request items from the inventory</p>
+    <main class="container-lg py-4 request-page">
+      <div class="row mb-4">
+        <div class="col-lg-10 offset-lg-1">
+          <div class="request-hero">
+            <div>
+              <h1 class="mb-2">Request an Item</h1>
+              <p class="text-muted mb-0">
+                Create a request with clear item details and automatic account
+                information.
+              </p>
             </div>
+            <a href="/my-requests" class="btn btn-outline-primary"
+              >View My Requests</a
+            >
+          </div>
         </div>
+      </div>
 
-        <div class="row mb-4">
-            <div class="col-lg-8 offset-lg-2">
-                <div class="card">
-                    <div class="card-body">
-                        <!-- Form -->
-                        <form id="requestForm" class="needs-validation" novalidate>
-                            <!-- Success Message -->
-                            <div class="alert alert-success d-none" id="successMessage" role="alert">
-                                ✓ Request submitted successfully! You can track it in <a href="/my-requests" class="alert-link">My Requests</a>.
-                            </div>
-
-                            <!-- Error Message -->
-                            <div class="alert alert-danger d-none" id="errorMessage" role="alert"></div>
-
-                            <!-- Item Selection -->
-                            <div class="mb-3">
-                                <label for="itemId" class="form-label">Select Item <span class="text-danger">*</span></label>
-                                <select class="form-select" id="itemId" name="itemId" required>
-                                    <option value="">-- Select an item --</option>
-                                </select>
-                                <div class="invalid-feedback" id="itemIdError"></div>
-                            </div>
-
-                            <!-- Item Details (Read-only) -->
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Category</label>
-                                    <input type="text" class="form-control" id="categoryName" readonly>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Current Stock</label>
-                                    <input type="text" class="form-control" id="stockQuantity" readonly>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Description</label>
-                                <textarea class="form-control" id="itemDescription" rows="2" readonly></textarea>
-                            </div>
-
-                            <!-- Quantity -->
-                            <div class="mb-3">
-                                <label for="requestedQuantity" class="form-label">Quantity Requested <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="requestedQuantity" name="requestedQuantity" 
-                                    min="1" max="9999" required>
-                                <small class="form-text text-muted">Enter a quantity of at least 1</small>
-                                <div class="invalid-feedback" id="quantityError"></div>
-                            </div>
-
-                            <!-- Divider -->
-                            <hr>
-
-                            <!-- Requester Info -->
-                            <h5 class="mb-3">Requester Information (Temporary)</h5>
-                            <p class="text-muted small mb-3">
-                                ⚠️ Using email-based identity. Once authentication is implemented, this will be automatic.
-                            </p>
-
-                            <div class="mb-3">
-                                <label for="requesterName" class="form-label">Full Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="requesterName" name="requesterName" 
-                                    placeholder="John Doe" required>
-                                <div class="invalid-feedback" id="nameError"></div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="requesterEmail" class="form-label">Email Address <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" id="requesterEmail" name="requesterEmail" 
-                                    placeholder="john@example.com" required>
-                                <small class="form-text text-muted">You'll use this to track your requests</small>
-                                <div class="invalid-feedback" id="emailError"></div>
-                            </div>
-
-                            <!-- Submit -->
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
-                                    <span id="submitBtnText">Submit Request</span>
-                                    <span id="submitSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+      <div class="row mb-4">
+        <div class="col-lg-10 offset-lg-1">
+          <div class="card">
+            <div class="card-body">
+              <form id="requestForm" class="needs-validation" novalidate>
+                <div
+                  class="alert alert-success d-none"
+                  id="successMessage"
+                  role="alert"
+                >
+                  ✓ Request submitted successfully! You can track it in
+                  <a href="/my-requests" class="alert-link">My Requests</a>.
                 </div>
+
+                <div
+                  class="alert alert-danger d-none"
+                  id="errorMessage"
+                  role="alert"
+                ></div>
+
+                <div class="row g-4">
+                  <div class="col-lg-7">
+                    <div class="request-section">
+                      <h5 class="request-section-title">Item Details</h5>
+
+                      <div class="mb-3">
+                        <label for="itemId" class="form-label"
+                          >Select Item <span class="text-danger">*</span></label
+                        >
+                        <select
+                          class="form-select"
+                          id="itemId"
+                          name="itemId"
+                          required
+                        >
+                          <option value="">-- Select an item --</option>
+                        </select>
+                        <div class="invalid-feedback" id="itemIdError"></div>
+                      </div>
+
+                      <div class="row mb-3">
+                        <div class="col-md-6">
+                          <label class="form-label">Category</label>
+                          <input
+                            type="text"
+                            class="form-control"
+                            id="categoryName"
+                            readonly
+                          />
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label">Current Stock</label>
+                          <input
+                            type="text"
+                            class="form-control"
+                            id="stockQuantity"
+                            readonly
+                          />
+                        </div>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea
+                          class="form-control"
+                          id="itemDescription"
+                          rows="2"
+                          readonly
+                        ></textarea>
+                      </div>
+
+                      <div class="mb-0">
+                        <label for="requestedQuantity" class="form-label"
+                          >Quantity Requested
+                          <span class="text-danger">*</span></label
+                        >
+                        <input
+                          type="number"
+                          class="form-control"
+                          id="requestedQuantity"
+                          name="requestedQuantity"
+                          min="1"
+                          max="9999"
+                          required
+                        />
+                        <small class="form-text text-muted"
+                          >Enter quantity needed for current operation</small
+                        >
+                        <div class="invalid-feedback" id="quantityError"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-lg-5">
+                    <div class="request-section request-section-accent">
+                      <h5 class="request-section-title">Requester Profile</h5>
+                      <p class="text-muted small mb-3">
+                        These fields are auto-filled from your signed-in
+                        account.
+                      </p>
+
+                      <div class="mb-3">
+                        <label for="requesterName" class="form-label"
+                          >Full Name <span class="text-danger">*</span></label
+                        >
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="requesterName"
+                          name="requesterName"
+                          placeholder="John Doe"
+                          required
+                        />
+                        <div class="invalid-feedback" id="nameError"></div>
+                      </div>
+
+                      <div class="mb-3">
+                        <label for="requesterEmail" class="form-label"
+                          >Email Address
+                          <span class="text-danger">*</span></label
+                        >
+                        <input
+                          type="email"
+                          class="form-control"
+                          id="requesterEmail"
+                          name="requesterEmail"
+                          placeholder="john@example.com"
+                          required
+                        />
+                        <small class="form-text text-muted"
+                          >Used to track request history</small
+                        >
+                        <div class="invalid-feedback" id="emailError"></div>
+                      </div>
+
+                      <div class="d-grid gap-2 mt-4">
+                        <button
+                          type="submit"
+                          class="btn btn-primary btn-lg"
+                          id="submitBtn"
+                        >
+                          <span id="submitBtnText">Submit Request</span>
+                          <span
+                            id="submitSpinner"
+                            class="spinner-border spinner-border-sm ms-2 d-none"
+                            role="status"
+                            aria-hidden="true"
+                          ></span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
             </div>
+          </div>
         </div>
+      </div>
     </main>
 
     <footer th:replace="~{fragments/footer :: footer}"></footer>
@@ -111,5 +201,5 @@
     <script th:src="@{/js/api/apiClient.js}"></script>
     <script th:src="@{/js/common/authNav.js}"></script>
     <script th:src="@{/js/pages/request.js}"></script>
-</body>
+  </body>
 </html>

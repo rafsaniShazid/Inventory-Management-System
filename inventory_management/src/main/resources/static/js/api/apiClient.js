@@ -5,6 +5,7 @@
 
 const API_BASE_URL = '/api';
 const AUTH_TOKEN_KEY = 'ims_auth_token';
+const AUTH_NAME_KEY = 'ims_auth_name';
 const AUTH_EMAIL_KEY = 'ims_auth_email';
 const AUTH_ROLE_KEY = 'ims_auth_role';
 
@@ -18,6 +19,9 @@ function setAuthSession(authResponse) {
     }
 
     localStorage.setItem(AUTH_TOKEN_KEY, authResponse.token);
+    if (authResponse.fullName) {
+        localStorage.setItem(AUTH_NAME_KEY, authResponse.fullName);
+    }
     if (authResponse.email) {
         localStorage.setItem(AUTH_EMAIL_KEY, authResponse.email);
     }
@@ -28,6 +32,7 @@ function setAuthSession(authResponse) {
 
 function clearAuthSession() {
     localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_NAME_KEY);
     localStorage.removeItem(AUTH_EMAIL_KEY);
     localStorage.removeItem(AUTH_ROLE_KEY);
 }
@@ -39,6 +44,7 @@ function getAuthUser() {
     }
 
     return {
+        fullName: localStorage.getItem(AUTH_NAME_KEY),
         email: localStorage.getItem(AUTH_EMAIL_KEY),
         role: localStorage.getItem(AUTH_ROLE_KEY),
         token,
