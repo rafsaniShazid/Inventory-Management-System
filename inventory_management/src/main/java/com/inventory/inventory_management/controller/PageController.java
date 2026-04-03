@@ -40,6 +40,11 @@ public class PageController {
         return "pages/categories";
     }
 
+    @GetMapping("/manage-requests")
+    public String manageRequests() {
+        return "pages/manage-requests";
+    }
+
     @GetMapping("/")
     public String index() {
         return "redirect:/login";

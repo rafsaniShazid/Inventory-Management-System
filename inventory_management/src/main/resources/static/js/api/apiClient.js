@@ -152,6 +152,10 @@ async function getApprovedRequests() {
     return apiCall('/requests/status/APPROVED');
 }
 
+async function getRequestsByStatus(status) {
+    return apiCall(`/requests/status/${encodeURIComponent(status)}`);
+}
+
 async function getLowStockItems(threshold = 10) {
     return apiCall(`/items/low-stock?threshold=${threshold}`);
 }

@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const logoutBtn = document.getElementById('logoutBtn');
     const adminItemsLink = document.getElementById('navItemsAdmin');
     const adminCategoriesLink = document.getElementById('navCategoriesAdmin');
+    const adminManageRequestsLink = document.getElementById('navManageRequestsAdmin');
     const requestItem = document.getElementById('navRequestItem');
     const myRequestsItem = document.getElementById('navMyRequestsItem');
 
@@ -35,6 +36,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (adminCategoriesLink) {
             adminCategoriesLink.style.display = authUser.role === 'ADMIN' ? '' : 'none';
         }
+        if (adminManageRequestsLink) {
+            adminManageRequestsLink.style.display = authUser.role === 'ADMIN' ? '' : 'none';
+        }
         const emailText = authUser.email || 'Signed in';
         const roleText = authUser.role ? ` (${authUser.role})` : '';
         userText.textContent = `${emailText}${roleText}`;
@@ -53,6 +57,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (adminCategoriesLink) {
             adminCategoriesLink.style.display = 'none';
+        }
+        if (adminManageRequestsLink) {
+            adminManageRequestsLink.style.display = 'none';
         }
     }
 
