@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manage Requests - Inventory Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav th:replace="~{fragments/header :: navbar}"></nav>
+
+    <main class="container-lg py-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h1>Request Management</h1>
+                <p class="text-muted mb-0">Admin-only page to view and approve/reject inventory requests.</p>
+            </div>
+        </div>
+
+        <div class="alert alert-danger d-none" id="manageRequestsError" role="alert"></div>
+        <div class="alert alert-success d-none" id="manageRequestsSuccess" role="alert"></div>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <ul class="nav nav-pills" id="requestStatusTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" type="button" data-status="PENDING">Pending</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" type="button" data-status="APPROVED">Approved</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" type="button" data-status="REJECTED">Rejected</button>
+                    </li>
+                </ul>
+                <button class="btn btn-sm btn-outline-primary" id="refreshRequestsBtn" type="button">Refresh</button>
+            </div>
+            <div class="card-body">
+                <div class="loading-spinner" id="manageRequestsLoader">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="manageRequestsTableContainer"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/api/apiClient.js}"></script>
+    <script th:src="@{/js/common/authNav.js}"></script>
+    <script th:src="@{/js/pages/manage-requests.js}"></script>
+</body>
+</html>

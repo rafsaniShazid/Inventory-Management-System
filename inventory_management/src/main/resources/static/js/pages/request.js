@@ -6,6 +6,9 @@
 let itemsData = [];
 
 document.addEventListener('DOMContentLoaded', function () {
+    if (!requireAuth()) {
+        return;
+    }
     loadItems();
     setupFormHandlers();
 });

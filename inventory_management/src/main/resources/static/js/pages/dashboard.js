@@ -4,6 +4,9 @@
  */
 
 document.addEventListener('DOMContentLoaded', function () {
+    if (!requireAuth()) {
+        return;
+    }
     loadDashboard();
 });
 
