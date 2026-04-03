@@ -7,12 +7,20 @@ let allRequests = [];
 let currentFilter = 'ALL';
 
 document.addEventListener('DOMContentLoaded', function () {
+    if (!requireAuth()) {
+        return;
+    }
     setupEventHandlers();
 });
 
 // ==================== Event Handlers ====================
 function setupEventHandlers() {
     const emailInput = document.getElementById('requesterEmail');
+
+    const authUser = typeof getAuthUser === 'function' ? getAuthUser() : null;
+    if (authUser && authUser.email) {
+        emailInput.value = authUser.email;
+    }
 
     // Allow Enter key to search
     emailInput.addEventListener('keypress', function (e) {
@@ -26,6 +34,8 @@ function setupEventHandlers() {
     const savedEmail = sessionStorage.getItem('lastSearchEmail');
     if (savedEmail) {
         emailInput.value = savedEmail;
+        searchRequests();
+    } else if (authUser && authUser.email) {
         searchRequests();
     }
 }

@@ -4,6 +4,66 @@
  */
 
 const API_BASE_URL = '/api';
+const AUTH_TOKEN_KEY = 'ims_auth_token';
+const AUTH_EMAIL_KEY = 'ims_auth_email';
+const AUTH_ROLE_KEY = 'ims_auth_role';
+
+function getAuthToken() {
+    return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+function setAuthSession(authResponse) {
+    if (!authResponse || !authResponse.token) {
+        return;
+    }
+
+    localStorage.setItem(AUTH_TOKEN_KEY, authResponse.token);
+    if (authResponse.email) {
+        localStorage.setItem(AUTH_EMAIL_KEY, authResponse.email);
+    }
+    if (authResponse.role) {
+        localStorage.setItem(AUTH_ROLE_KEY, authResponse.role);
+    }
+}
+
+function clearAuthSession() {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_EMAIL_KEY);
+    localStorage.removeItem(AUTH_ROLE_KEY);
+}
+
+function getAuthUser() {
+    const token = getAuthToken();
+    if (!token) {
+        return null;
+    }
+
+    return {
+        email: localStorage.getItem(AUTH_EMAIL_KEY),
+        role: localStorage.getItem(AUTH_ROLE_KEY),
+        token,
+    };
+}
+
+function isAuthenticated() {
+    return !!getAuthToken();
+}
+
+function requireAuth() {
+    if (isAuthenticated()) {
+        return true;
+    }
+
+    if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+    }
+    return false;
+}
+
+function logout() {
+    clearAuthSession();
+    window.location.href = '/login';
+}
 
 /**
  * Generic fetch wrapper with error handling
@@ -17,6 +77,12 @@ async function apiCall(endpoint, options = {}) {
     };
 
     const config = { ...defaultOptions, ...options };
+    config.headers = { ...defaultOptions.headers, ...(options.headers || {}) };
+
+    const token = getAuthToken();
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
 
     try {
         const response = await fetch(url, config);
@@ -31,6 +97,13 @@ async function apiCall(endpoint, options = {}) {
         }
 
         if (!response.ok) {
+            if (response.status === 401) {
+                clearAuthSession();
+                if (window.location.pathname !== '/login') {
+                    window.location.href = '/login';
+                }
+            }
+
             throw {
                 status: response.status,
                 message: data.message || data || 'Unknown error',
@@ -43,6 +116,26 @@ async function apiCall(endpoint, options = {}) {
         console.error('API Error:', error);
         throw error;
     }
+}
+
+// ==================== Auth APIs ====================
+
+async function loginUser(credentials) {
+    const response = await apiCall('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify(credentials),
+    });
+    setAuthSession(response);
+    return response;
+}
+
+async function registerUser(payload) {
+    const response = await apiCall('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+    setAuthSession(response);
+    return response;
 }
 
 // ==================== Dashboard APIs ====================

@@ -10,6 +10,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class PageController {
 
+    @GetMapping("/login")
+    public String login() {
+        return "pages/login";
+    }
+
     @GetMapping("/dashboard")
     public String dashboard() {
         return "pages/dashboard";
@@ -27,6 +32,6 @@ public class PageController {
 
     @GetMapping("/")
     public String index() {
-        return "redirect:/dashboard";
+        return "redirect:/login";
     }
 }

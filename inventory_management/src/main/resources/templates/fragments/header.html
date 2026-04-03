@@ -24,6 +24,15 @@
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/my-requests}" href="/my-requests">My Requests</a>
                 </li>
+                <li class="nav-item" id="navUserItem" style="display: none;">
+                    <span class="nav-link text-light" id="navUserText"></span>
+                </li>
+                <li class="nav-item" id="navLoginItem">
+                    <a class="nav-link" th:href="@{/login}" href="/login">Login</a>
+                </li>
+                <li class="nav-item" id="navLogoutItem" style="display: none;">
+                    <button class="btn btn-outline-light btn-sm ms-lg-2 mt-2 mt-lg-0" type="button" id="logoutBtn">Logout</button>
+                </li>
             </ul>
         </div>
     </div>
