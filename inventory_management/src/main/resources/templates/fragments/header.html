@@ -18,11 +18,17 @@
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/dashboard}" href="/dashboard">Dashboard</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item" id="navRequestItem">
                     <a class="nav-link" th:href="@{/request}" href="/request">Request Item</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item" id="navMyRequestsItem">
                     <a class="nav-link" th:href="@{/my-requests}" href="/my-requests">My Requests</a>
+                </li>
+                <li class="nav-item" id="navItemsAdmin" style="display: none;">
+                    <a class="nav-link" th:href="@{/items}" href="/items">Manage Items</a>
+                </li>
+                <li class="nav-item" id="navCategoriesAdmin" style="display: none;">
+                    <a class="nav-link" th:href="@{/categories}" href="/categories">Manage Categories</a>
                 </li>
                 <li class="nav-item" id="navUserItem" style="display: none;">
                     <span class="nav-link text-light" id="navUserText"></span>

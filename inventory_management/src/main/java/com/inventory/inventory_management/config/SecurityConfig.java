@@ -75,7 +75,7 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                    .requestMatchers("/", "/login", "/dashboard", "/request", "/my-requests").permitAll()
+                    .requestMatchers("/", "/login", "/dashboard", "/request", "/my-requests", "/items", "/categories").permitAll()
                     .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/error").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categories/**")
                         .hasAnyRole("USER", "MANAGER", "ADMIN")

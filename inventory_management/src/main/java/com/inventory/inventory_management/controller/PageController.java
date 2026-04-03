@@ -30,6 +30,16 @@ public class PageController {
         return "pages/my-requests";
     }
 
+    @GetMapping("/items")
+    public String items() {
+        return "pages/items";
+    }
+
+    @GetMapping("/categories")
+    public String categories() {
+        return "pages/categories";
+    }
+
     @GetMapping("/")
     public String index() {
         return "redirect:/login";

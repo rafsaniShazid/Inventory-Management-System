@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manage Items - Inventory Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav th:replace="~{fragments/header :: navbar}"></nav>
+
+    <main class="container-lg py-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h1>Item Management</h1>
+                <p class="text-muted mb-0">Admin-only page to add, update, and delete stationery items.</p>
+            </div>
+        </div>
+
+        <div class="alert alert-danger d-none" id="itemsError" role="alert"></div>
+        <div class="alert alert-success d-none" id="itemsSuccess" role="alert"></div>
+
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0" id="itemFormTitle">Add New Item</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="itemForm" novalidate>
+                            <input type="hidden" id="itemId">
+
+                            <div class="mb-3">
+                                <label for="itemName" class="form-label">Item Name</label>
+                                <input type="text" class="form-control" id="itemName" minlength="3" maxlength="200" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" rows="3" maxlength="500"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="stockQuantity" class="form-label">Stock Quantity</label>
+                                <input type="number" class="form-control" id="stockQuantity" min="0" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="categoryId" class="form-label">Category</label>
+                                <select class="form-select" id="categoryId" required>
+                                    <option value="">Select category</option>
+                                </select>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex">
+                                <button type="submit" class="btn btn-primary" id="saveItemBtn">Save Item</button>
+                                <button type="button" class="btn btn-outline-secondary" id="cancelEditBtn" style="display:none;">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Items</h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="refreshItemsBtn">Refresh</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="loading-spinner" id="itemsLoader">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div id="itemsTableContainer"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/api/apiClient.js}"></script>
+    <script th:src="@{/js/common/authNav.js}"></script>
+    <script th:src="@{/js/pages/items.js}"></script>
+</body>
+</html>

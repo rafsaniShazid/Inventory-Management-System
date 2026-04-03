@@ -162,6 +162,50 @@ async function getAllItems() {
     return apiCall('/items');
 }
 
+async function createItem(itemData) {
+    return apiCall('/items', {
+        method: 'POST',
+        body: JSON.stringify(itemData),
+    });
+}
+
+async function updateItem(itemId, itemData) {
+    return apiCall(`/items/${itemId}`, {
+        method: 'PUT',
+        body: JSON.stringify(itemData),
+    });
+}
+
+async function deleteItem(itemId) {
+    return apiCall(`/items/${itemId}`, {
+        method: 'DELETE',
+    });
+}
+
+async function getAllCategories() {
+    return apiCall('/categories');
+}
+
+async function createCategory(categoryData) {
+    return apiCall('/categories', {
+        method: 'POST',
+        body: JSON.stringify(categoryData),
+    });
+}
+
+async function updateCategory(categoryId, categoryData) {
+    return apiCall(`/categories/${categoryId}`, {
+        method: 'PUT',
+        body: JSON.stringify(categoryData),
+    });
+}
+
+async function deleteCategory(categoryId) {
+    return apiCall(`/categories/${categoryId}`, {
+        method: 'DELETE',
+    });
+}
+
 async function submitRequest(requestData) {
     return apiCall('/requests', {
         method: 'POST',
