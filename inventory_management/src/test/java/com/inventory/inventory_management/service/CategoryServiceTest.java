@@ -164,6 +164,22 @@ class CategoryServiceTest {
     }
 
     @Test
+    void testUpdateCategory_DuplicateName_ThrowsException() {
+        // Arrange
+        CategoryDTO updateDTO = new CategoryDTO();
+        updateDTO.setCategoryName("Stationery");
+        updateDTO.setDescription("Updated description");
+
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
+        when(categoryRepository.existsByCategoryName("Stationery")).thenReturn(true);
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class,
+                () -> categoryService.updateCategory(1L, updateDTO));
+        verify(categoryRepository, never()).save(any(Category.class));
+    }
+
+    @Test
     void testDeleteCategory_Success() {
         // Arrange
         testCategory.setItems(new HashSet<>()); // Empty set of items
@@ -173,5 +189,26 @@ class CategoryServiceTest {
         // Act & Assert
         assertDoesNotThrow(() -> categoryService.deleteCategory(1L));
         verify(categoryRepository, times(1)).delete(testCategory);
+    }
+
+    @Test
+    void testDeleteCategory_WithItems_ThrowsException() {
+        // Arrange
+        testCategory.setItems(new HashSet<>(List.of(new com.inventory.inventory_management.entity.Item())));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> categoryService.deleteCategory(1L));
+        verify(categoryRepository, never()).delete(any(Category.class));
+    }
+
+    @Test
+    void testDeleteCategory_NotFound_ThrowsException() {
+        // Arrange
+        when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> categoryService.deleteCategory(999L));
+        verify(categoryRepository, never()).delete(any(Category.class));
     }
 }
