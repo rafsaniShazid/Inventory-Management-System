@@ -37,6 +37,7 @@ public class AuthController {
         AuthResponseDTO response = new AuthResponseDTO(
                 token,
                 "Bearer",
+                createdUser.getFullName(),
                 createdUser.getEmail(),
                 createdUser.getRole());
 
@@ -55,6 +56,7 @@ public class AuthController {
         AuthResponseDTO response = new AuthResponseDTO(
                 token,
                 "Bearer",
+                user.getFullName(),
                 user.getEmail(),
                 user.getRole());
 

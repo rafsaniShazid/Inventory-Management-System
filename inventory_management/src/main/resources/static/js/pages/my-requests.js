@@ -20,6 +20,7 @@ function setupEventHandlers() {
     const authUser = typeof getAuthUser === 'function' ? getAuthUser() : null;
     if (authUser && authUser.email) {
         emailInput.value = authUser.email;
+        emailInput.readOnly = true;
     }
 
     // Allow Enter key to search
@@ -30,12 +31,7 @@ function setupEventHandlers() {
         }
     });
 
-    // Remember last email in sessionStorage
-    const savedEmail = sessionStorage.getItem('lastSearchEmail');
-    if (savedEmail) {
-        emailInput.value = savedEmail;
-        searchRequests();
-    } else if (authUser && authUser.email) {
+    if (authUser && authUser.email) {
         searchRequests();
     }
 }
@@ -43,7 +39,8 @@ function setupEventHandlers() {
 // ==================== Search & Load ====================
 async function searchRequests() {
     const emailInput = document.getElementById('requesterEmail');
-    const email = emailInput.value.trim();
+    const authUser = typeof getAuthUser === 'function' ? getAuthUser() : null;
+    const email = (authUser && authUser.email ? authUser.email : emailInput.value).trim();
 
     // Validate email
     if (!email) {
@@ -57,9 +54,6 @@ async function searchRequests() {
         showError('Please enter a valid email address');
         return;
     }
-
-    // Save email to sessionStorage
-    sessionStorage.setItem('lastSearchEmail', email);
 
     // Load requests
     await loadRequestsByEmail(email);
@@ -82,6 +76,8 @@ async function loadRequestsByEmail(email) {
             allRequests = [];
         }
 
+        updateRequestMetrics(allRequests);
+
         // Display requests
         displayRequests(allRequests);
     } catch (error) {
@@ -92,6 +88,7 @@ async function loadRequestsByEmail(email) {
         if (error.status === 404) {
             errorMsg = 'No requests found for this email address';
             allRequests = [];
+            updateRequestMetrics(allRequests);
             displayRequests([]);
         } else if (error.message) {
             errorMsg = error.message;
@@ -177,6 +174,40 @@ function displayRequests(requests) {
     `;
 
     container.innerHTML = table;
+}
+
+function updateRequestMetrics(requests) {
+    const totals = {
+        ALL: Array.isArray(requests) ? requests.length : 0,
+        PENDING: 0,
+        APPROVED: 0,
+        REJECTED: 0,
+    };
+
+    if (Array.isArray(requests)) {
+        requests.forEach(req => {
+            if (totals[req.status] !== undefined) {
+                totals[req.status] += 1;
+            }
+        });
+    }
+
+    setText('metricAll', totals.ALL);
+    setText('metricPending', totals.PENDING);
+    setText('metricApproved', totals.APPROVED);
+    setText('metricRejected', totals.REJECTED);
+
+    setText('allCount', `(${totals.ALL})`);
+    setText('pendingCount', `(${totals.PENDING})`);
+    setText('approvedCount', `(${totals.APPROVED})`);
+    setText('rejectedCount', `(${totals.REJECTED})`);
+}
+
+function setText(elementId, value) {
+    const el = document.getElementById(elementId);
+    if (el) {
+        el.textContent = String(value);
+    }
 }
 
 // ==================== Status Filter ====================

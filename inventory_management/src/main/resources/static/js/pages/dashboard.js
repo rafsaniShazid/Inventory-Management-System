@@ -14,10 +14,71 @@ async function loadDashboard() {
     // Load all dashboard widgets in parallel
     await Promise.all([
         loadStats(),
+        loadItemsOverview(),
         loadPendingRequests(),
         loadLowStockItems(),
         loadApprovedRequests(),
     ]);
+}
+
+// ==================== Items Overview Widget ====================
+async function loadItemsOverview() {
+    const container = document.getElementById('itemsOverviewContainer');
+
+    try {
+        showLoading('itemsOverviewLoader');
+        const items = await getAllItems();
+
+        hideLoading('itemsOverviewLoader');
+        clearError('itemsOverviewError');
+
+        if (!Array.isArray(items) || items.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📦</div>
+                    <p>No items found in inventory</p>
+                </div>
+            `;
+            return;
+        }
+
+        const limitedItems = items.slice(0, 8);
+        const grid = `
+            <div class="row g-3">
+                ${limitedItems.map(item => {
+                    const imageUrl = getItemImage(item.itemName, item.categoryName);
+                    const stockClass = Number(item.stockQuantity) <= 10 ? 'bg-danger' : 'bg-success';
+                    return `
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <div class="item-showcase-card">
+                                <div class="item-showcase-image-wrap">
+                                    <img class="item-showcase-image" src="${imageUrl}" alt="${escapeHtml(item.itemName || 'Inventory item')}" loading="lazy">
+                                </div>
+                                <div class="item-showcase-body">
+                                    <h6 class="item-showcase-name">${escapeHtml(item.itemName || 'Unnamed Item')}</h6>
+                                    <p class="item-showcase-category">${escapeHtml(item.categoryName || 'Uncategorized')}</p>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <span class="badge ${stockClass}">Stock: ${item.stockQuantity ?? 0}</span>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="goToRequestItem(${item.itemId})">Request</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+
+        container.innerHTML = grid;
+    } catch (err) {
+        hideLoading('itemsOverviewLoader');
+        showError('Failed to load items overview', 'itemsOverviewError');
+        container.innerHTML = `
+            <div class="empty-state">
+                <p>Unable to load items. Please try again later.</p>
+            </div>
+        `;
+    }
 }
 
 // ==================== Stats Widget ====================
@@ -320,5 +381,86 @@ async function rejectRequest(requestId, button) {
         button.disabled = false;
         button.textContent = originalText;
     }
+}
+
+function getItemIcon(itemName, categoryName) {
+    const text = `${(itemName || '').toLowerCase()} ${(categoryName || '').toLowerCase()}`;
+
+    if (text.includes('pen') || text.includes('pencil') || text.includes('marker')) return '✏️';
+    if (text.includes('paper') || text.includes('notebook') || text.includes('sheet')) return '📄';
+    if (text.includes('stapler') || text.includes('scissor') || text.includes('tape')) return '🛠️';
+    if (text.includes('eraser')) return '🧽';
+    if (text.includes('ruler')) return '📏';
+    if (text.includes('art') || text.includes('color') || text.includes('paint')) return '🎨';
+
+    return '📦';
+}
+
+function getItemImage(itemName, categoryName) {
+    const text = `${(itemName || '').toLowerCase()} ${(categoryName || '').toLowerCase()}`;
+
+    if (text.includes('ballpoint') || text.includes('blue pen')) {
+        return '/images/items/blueballpoint.jpg';
+    }
+    if (text.includes('hb pencil') || text.includes('wooden pencil')) {
+        return '/images/items/pencil.jpg';
+    }
+    if (text.includes('marker')) {
+        return '/images/items/permanentmarker.jpg';
+    }
+    if (text.includes('notebook')) {
+        return '/images/items/a4notebook.jpg';
+    }
+    if (text.includes('sticky')) {
+        return '/images/items/stickynote.jpg';
+    }
+    if (text.includes('printer paper') || text.includes('500 sheets')) {
+        return '/images/items/a4printerpaper.jpg';
+    }
+    if (text.includes('stapler')) {
+        return '/images/items/metalstapler.jpg';
+    }
+    if (text.includes('punch')) {
+        return '/images/items/paperpunch.jpg';
+    }
+    if (text.includes('color pencil')) {
+        return '/images/items/pencil.jpg';
+    }
+    if (text.includes('sketch book') || text.includes('sketchbook')) {
+        return '/images/items/a4notebook.jpg';
+    }
+    if (text.includes('writing supplies')) {
+        return '/images/items/blueballpoint.jpg';
+    }
+    if (text.includes('paper products')) {
+        return '/images/items/a4notebook.jpg';
+    }
+    if (text.includes('office equipment')) {
+        return '/images/items/metalstapler.jpg';
+    }
+    if (text.includes('art supplies')) {
+        return '/images/items/pencil.jpg';
+    }
+
+    return '/images/items/a4notebook.jpg';
+}
+
+function goToRequestItem(itemId) {
+    const safeId = Number(itemId);
+    if (!safeId) {
+        window.location.href = '/request';
+        return;
+    }
+
+    window.location.href = `/request?itemId=${encodeURIComponent(safeId)}`;
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
 }
 
