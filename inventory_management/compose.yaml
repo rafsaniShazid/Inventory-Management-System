@@ -1,9 +1,37 @@
 services:
   postgres:
-    image: 'postgres:latest'
+    image: "postgres:17-alpine"
     environment:
-      - 'POSTGRES_DB=mydatabase'
-      - 'POSTGRES_PASSWORD=secret'
-      - 'POSTGRES_USER=myuser'
+      POSTGRES_DB: mydatabase
+      POSTGRES_PASSWORD: secret
+      POSTGRES_USER: myuser
     ports:
-      - '5433:5432'  # Map host port 5433 to container port 5432 (avoiding conflict with Windows PostgreSQL on 5432)
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d mydatabase"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: inventory-management-app:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mydatabase
+      SPRING_DATASOURCE_USERNAME: myuser
+      SPRING_DATASOURCE_PASSWORD: secret
+    ports:
+      - "${APP_HOST_PORT:-8082}:8081"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
