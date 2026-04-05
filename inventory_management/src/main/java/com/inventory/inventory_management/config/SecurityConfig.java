@@ -29,13 +29,9 @@ import org.springframework.security.web.SecurityFilterChain;
  * - Disables CSRF protection (safe for testing)
  * - Permits all requests (no login needed)
  * 
- * LATER IN PHASE 3 (Your responsibility - Member 1):
- * You'll replace this with REAL security:
- * - JWT token authentication
- * - Role-based access control:
- * * ADMIN can DELETE items
- * * MANAGER can UPDATE stock
- * * USER can only VIEW items
+ * Role-based access control:
+ * - ADMIN manages inventory and reviews requests
+ * - USER can view items and submit requests
  * - Password encryption (BCrypt)
  * 
  * FOR NOW: Just lets you test without authentication errors
@@ -69,35 +65,37 @@ public class SecurityConfig {
             AuthenticationProvider authenticationProvider) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-            .httpBasic(AbstractHttpConfigurer::disable)
-            .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                    .requestMatchers("/", "/login", "/dashboard", "/request", "/my-requests", "/items", "/categories", "/manage-requests").permitAll()
-                    .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/error").permitAll()
+                        .requestMatchers("/", "/login", "/dashboard", "/request", "/my-requests", "/items",
+                                "/categories", "/manage-requests")
+                        .permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/error").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categories/**")
-                        .hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .hasAnyRole("USER", "ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/items/**")
-                        .hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .hasAnyRole("USER", "ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/requests/**")
-                        .hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .hasRole("USER")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/requests/email/**")
-                        .hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .hasRole("USER")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/requests/**")
-                        .hasAnyRole("MANAGER", "ADMIN")
+                        .hasAnyRole("USER", "ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/requests/*/review")
-                        .hasAnyRole("MANAGER", "ADMIN")
+                        .hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/requests/**")
-                        .hasAnyRole("MANAGER", "ADMIN")
+                        .hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/items/**",
                                 "/api/categories/**")
                         .hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/items/*/stock")
-                        .hasAnyRole("MANAGER", "ADMIN")
+                        .hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/items/**", "/api/categories/**")
-                        .hasAnyRole("MANAGER", "ADMIN")
+                        .hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/items/**",
                                 "/api/categories/**")
                         .hasRole("ADMIN")

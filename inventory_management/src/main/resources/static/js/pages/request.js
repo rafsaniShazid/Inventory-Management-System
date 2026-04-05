@@ -9,6 +9,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!requireAuth()) {
         return;
     }
+
+    const authUser = typeof getAuthUser === 'function' ? getAuthUser() : null;
+    if (!authUser || authUser.role !== 'USER') {
+        window.location.href = '/dashboard';
+        return;
+    }
+
     loadItems();
     setupFormHandlers();
     prefillRequesterInfo();
