@@ -167,16 +167,23 @@ async function submitRequestForm() {
     submitBtnText.textContent = 'Submitting...';
 
     try {
+        const selectedItemId = parseInt(document.getElementById('itemId').value, 10);
+        const requestedQuantity = parseInt(document.getElementById('requestedQuantity').value, 10);
+
         // Prepare request data
         const requestData = {
-            itemId: parseInt(document.getElementById('itemId').value),
-            requestedQuantity: parseInt(document.getElementById('requestedQuantity').value),
+            items: [
+                {
+                    itemId: selectedItemId,
+                    quantity: requestedQuantity
+                }
+            ],
             requesterName: document.getElementById('requesterName').value.trim(),
             requesterEmail: document.getElementById('requesterEmail').value.trim(),
         };
 
         // Validate data
-        if (!requestData.itemId || !requestData.requestedQuantity || !requestData.requesterName || !requestData.requesterEmail) {
+        if (!selectedItemId || !requestedQuantity || !requestData.requesterName || !requestData.requesterEmail) {
             throw new Error('Please fill in all required fields');
         }
 

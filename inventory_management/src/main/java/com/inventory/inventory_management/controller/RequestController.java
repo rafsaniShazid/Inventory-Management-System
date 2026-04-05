@@ -54,8 +54,10 @@ public class RequestController {
      * POST http://localhost:8080/api/requests
      * Headers: Content-Type: application/json
      * Body: {
-     *   "itemId": 1,
-     *   "requestedQuantity": 5,
+     *   "items": [
+     *     { "itemId": 1, "quantity": 5 },
+     *     { "itemId": 3, "quantity": 2 }
+     *   ],
      *   "requesterName": "John Doe",
      *   "requesterEmail": "john@example.com"
      * }
@@ -63,9 +65,10 @@ public class RequestController {
      * RESPONSE (201 Created):
      * {
      *   "requestId": 1,
-     *   "itemId": 1,
-     *   "itemName": "Blue Ballpoint Pen",
-     *   "requestedQuantity": 5,
+     *   "items": [
+     *     { "requestItemId": 10, "itemId": 1, "itemName": "Blue Ballpoint Pen", "quantity": 5 },
+     *     { "requestItemId": 11, "itemId": 3, "itemName": "Notebook", "quantity": 2 }
+     *   ],
      *   "requesterName": "John Doe",
      *   "requesterEmail": "john@example.com",
      *   "status": "PENDING",

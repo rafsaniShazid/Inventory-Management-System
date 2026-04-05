@@ -161,9 +161,9 @@ async function loadPendingRequests() {
                     <thead class="table-light">
                         <tr>
                             <th>Request ID</th>
-                            <th>Item</th>
+                            <th>Items</th>
                             <th>Requester</th>
-                            <th>Quantity</th>
+                            <th>Total Qty</th>
                             <th>Date</th>
                             <th>Actions</th>
                         </tr>
@@ -172,13 +172,13 @@ async function loadPendingRequests() {
                         ${requests.map(req => `
                             <tr>
                                 <td><small>${req.requestId}</small></td>
-                                <td>${req.itemName || 'N/A'}</td>
+                                <td>${escapeHtml(getRequestItemsSummary(req))}</td>
                                 <td>
                                     <small>${req.requesterName}</small>
                                     <br>
                                     <small class="text-muted">${req.requesterEmail}</small>
                                 </td>
-                                <td>${req.requestedQuantity}</td>
+                                <td>${getRequestTotalQuantity(req)}</td>
                                 <td><small>${formatDate(req.requestedAt)}</small></td>
                                 <td>
                                     <div class="request-actions">
@@ -289,9 +289,9 @@ async function loadApprovedRequests() {
                     <thead class="table-light">
                         <tr>
                             <th>Request ID</th>
-                            <th>Item</th>
+                            <th>Items</th>
                             <th>Requester</th>
-                            <th>Quantity</th>
+                            <th>Total Qty</th>
                             <th>Requested</th>
                             <th>Approved</th>
                             <th>Remarks</th>
@@ -301,13 +301,13 @@ async function loadApprovedRequests() {
                         ${Limited.map(req => `
                             <tr>
                                 <td><small>${req.requestId}</small></td>
-                                <td>${req.itemName || 'N/A'}</td>
+                                <td>${escapeHtml(getRequestItemsSummary(req))}</td>
                                 <td>
                                     <small>${req.requesterName}</small>
                                     <br>
                                     <small class="text-muted">${req.requesterEmail}</small>
                                 </td>
-                                <td>${req.requestedQuantity}</td>
+                                <td>${getRequestTotalQuantity(req)}</td>
                                 <td><small>${formatDate(req.requestedAt)}</small></td>
                                 <td><small>${formatDate(req.reviewedAt)}</small></td>
                                 <td><small>${req.reviewRemarks || '-'}</small></td>
@@ -445,6 +445,24 @@ function getItemImage(itemName, categoryName) {
     }
 
     return '/images/items/a4notebook.jpg';
+}
+
+function getRequestItemsSummary(request) {
+    if (!request || !Array.isArray(request.items) || request.items.length === 0) {
+        return 'N/A';
+    }
+
+    return request.items
+        .map(item => `${item.itemName || `Item #${item.itemId ?? 'Unknown'}`} x${item.quantity ?? 0}`)
+        .join(', ');
+}
+
+function getRequestTotalQuantity(request) {
+    if (!request || !Array.isArray(request.items) || request.items.length === 0) {
+        return 0;
+    }
+
+    return request.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
 }
 
 function goToRequestItem(itemId) {
