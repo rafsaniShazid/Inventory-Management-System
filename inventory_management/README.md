@@ -55,9 +55,9 @@ This is a **Software Engineering Lab Project** implementing a complete professio
 ## 📊 Entity-Relationship Diagram (ER Diagram)
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                    DATABASE ENTITIES                     │
-└──────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│            DATABASE ENTITIES (Many-to-Many Implemented)          │
+└──────────────────────────────────────────────────────────────────┘
 
 ┌──────────────┐
 │    User      │◄──────────┐
@@ -73,74 +73,70 @@ This is a **Software Engineering Lab Project** implementing a complete professio
     1:M│              │ roleName  │
        │              │ description
        ▼              └───────────┘
-┌──────────────┐
-│   Request    │
-├──────────────┤
-│ requestId    │
-│ userId (FK)  │
-│ itemId (FK)  │
-│ quantity     │
-│ statusId (FK)│
-│ createdDate  │
-└──────────────┘
        │
-    M:1│
-       ▼
-┌──────────────┐
-│RequestStatus │
-├──────────────┤
-│ statusId (PK)│
-│ statusName   │
-└──────────────┘
+       │
+       │         ┌────────────────────┐
+       └────────►│   RequestStatus    │
+       (statusId)├────────────────────┤
+                 │ statusId (PK)      │
+                 │ statusName         │
+                 └────────────────────┘
 
-┌──────────────┐      ┌──────────────┐
-│   Category   │◄─────│    Item      │
-├──────────────┤  1:M ├──────────────┤
-│ categoryId   │      │ itemId (PK)  │
-│ categoryName │      │ categoryId FK│
-│ description  │      │ itemName     │
-└──────────────┘      │ description  │
-                      │ stockQuantity│
-                      │ createdDate  │
-                      └──────────────┘
-                             │
-                          M:1│
-                             ▼
-                      (relates to Request)
+
+┌──────────────┐      ┌────────────────────┐      ┌──────────────┐
+│   Request    │◄─────│   RequestItem      │─────►│    Item      │
+├──────────────┤  1:M ├────────────────────┤ M:1  ├──────────────┤
+│ requestId    │      │ requestItemId (PK) │      │ itemId (PK)  │
+│ requesterName│      │ requestId (FK)     │      │ categoryId FK│
+│ requesterEmail      │ itemId (FK)        │      │ itemName     │
+│ status (FK)  │      │ quantity ★         │      │ description  │
+│ requestedAt  │      └────────────────────┘      │ stockQuantity
+│ reviewedAt   │           ▲                       └──────────────┘
+│ reviewRemarks│           │                              ▲
+└──────────────┘    M:N Relationship              1:M│
+                  (Many Items per                   │
+                   Many Requests)          ┌──────────────┐
+                                           │   Category   │
+            ★ quantity field specifies     ├──────────────┤
+              how many of each item       │ categoryId   │
+              per request                 │ categoryName │
+                                          └──────────────┘
 ```
 
 ### Database Schema
 
 | Entity | Primary Key | Fields | Relationships |
 |--------|---|---|---|
-| **User** | userId (SERIAL) | username, email, password, roleId | M:1 Role, 1:M Request |
+| **User** | userId (SERIAL) | username, email, password, roleId | M:1 Role |
 | **Role** | roleId (SERIAL) | roleName, description | 1:M User |
 | **Category** | categoryId (SERIAL) | categoryName, description | 1:M Item |
-| **Item** | itemId (SERIAL) | categoryId (FK), itemName, description, stockQuantity, createdDate | M:1 Category, 1:M Request |
-| **Request** | requestId (SERIAL) | userId (FK), itemId (FK), quantity, statusId (FK), createdDate | M:1 User, M:1 Item, M:1 RequestStatus |
+| **Item** | itemId (SERIAL) | categoryId (FK), itemName, description, stockQuantity, createdDate | M:1 Category, 1:M RequestItem |
+| **Request** | requestId (SERIAL) | requesterName, requesterEmail, statusId (FK), requestedAt, reviewedAt, reviewRemarks | M:1 RequestStatus, 1:M RequestItem |
+| **RequestItem** | requestItemId (SERIAL) | requestId (FK), itemId (FK), quantity | M:1 Request, M:1 Item |
 | **RequestStatus** | statusId (SERIAL) | statusName | 1:M Request |
 
-### Optional Many-to-Many Extension
+### Many-to-Many Relationship
 
-If you want a request to contain multiple items, the schema can be extended with a join table:
+**Request ↔ RequestItem ↔ Item (Join Table Pattern)**
 
-| Entity | Purpose |
-|--------|---------|
-| **RequestItem** | Join table between Request and Item |
+**Benefits:**
+- ✅ One request can contain **multiple items**
+- ✅ One item can be in **multiple requests**  
+- ✅ Each item-request pair tracks its own **quantity**
+- ✅ Shopping cart-like functionality enabled
+- ✅ More flexible inventory request management
 
-Recommended columns:
+**Example:**
+```
+Request #101 (from John Doe):
+  ├─ RequestItem #1: Blue Pen × 50 units
+  ├─ RequestItem #2: Notebook × 20 units
+  └─ RequestItem #3: Pencil × 100 units
 
-| Column | Type | Notes |
-|--------|------|-------|
-| request_id | FK | References Request.requestId |
-| item_id | FK | References Item.itemId |
-| quantity | int | Quantity of each item in the request |
-
-This changes the relationship to:
-
-- Request M:N Item through RequestItem
-- A single request can contain many items
-- A single item can appear in many requests
+Request #102 (from Jane Smith):
+  ├─ RequestItem #4: Blue Pen × 30 units (same item, different request)
+  └─ RequestItem #5: Eraser × 15 units
+```
 
 ---
 

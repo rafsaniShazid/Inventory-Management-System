@@ -1,5 +1,7 @@
 package com.inventory.inventory_management.dto;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -38,46 +40,52 @@ class ValidationTest {
      */
     @Test
     void testRequestDTO_Valid() {
-        RequestDTO requestDTO = new RequestDTO(
-            1L,
-            5,
-            "John Doe",
-            "john@example.com"
-        );
+        List<RequestItemDTO> items = new ArrayList<>();
+        RequestItemDTO item1 = new RequestItemDTO();
+        item1.setItemId(1L);
+        item1.setQuantity(5);
+        items.add(item1);
+
+        RequestDTO requestDTO = new RequestDTO();
+        requestDTO.setItems(items);
+        requestDTO.setRequesterName("John Doe");
+        requestDTO.setRequesterEmail("john@example.com");
 
         Set<ConstraintViolation<RequestDTO>> violations = validator.validate(requestDTO);
         assertTrue(violations.isEmpty(), "Valid RequestDTO should have no violations");
     }
 
     /**
-     * TEST: RequestDTO - null itemId fails
+     * TEST: RequestDTO - empty items list fails
      */
     @Test
-    void testRequestDTO_NullItemId() {
-        RequestDTO requestDTO = new RequestDTO(
-            null, // INVALID
-            5,
-            "John Doe",
-            "john@example.com"
-        );
+    void testRequestDTO_EmptyItemsList() {
+        RequestDTO requestDTO = new RequestDTO();
+        requestDTO.setItems(new ArrayList<>()); // INVALID - empty list
+        requestDTO.setRequesterName("John Doe");
+        requestDTO.setRequesterEmail("john@example.com");
 
         Set<ConstraintViolation<RequestDTO>> violations = validator.validate(requestDTO);
-        assertFalse(violations.isEmpty(), "Null itemId should fail");
+        assertFalse(violations.isEmpty(), "Empty items list should fail");
         assertTrue(violations.stream()
-            .anyMatch(v -> v.getPropertyPath().toString().equals("itemId")));
+            .anyMatch(v -> v.getPropertyPath().toString().equals("items")));
     }
 
     /**
-     * TEST: RequestDTO - negative quantity fails
+     * TEST: RequestDTO - invalid item quantity fails
      */
     @Test
-    void testRequestDTO_NegativeQuantity() {
-        RequestDTO requestDTO = new RequestDTO(
-            1L,
-            -5, // INVALID
-            "John Doe",
-            "john@example.com"
-        );
+    void testRequestDTO_InvalidItemQuantity() {
+        List<RequestItemDTO> items = new ArrayList<>();
+        RequestItemDTO item1 = new RequestItemDTO();
+        item1.setItemId(1L);
+        item1.setQuantity(-5); // INVALID - negative
+        items.add(item1);
+
+        RequestDTO requestDTO = new RequestDTO();
+        requestDTO.setItems(items);
+        requestDTO.setRequesterName("John Doe");
+        requestDTO.setRequesterEmail("john@example.com");
 
         Set<ConstraintViolation<RequestDTO>> violations = validator.validate(requestDTO);
         assertFalse(violations.isEmpty(), "Negative quantity should fail");
@@ -88,12 +96,16 @@ class ValidationTest {
      */
     @Test
     void testRequestDTO_InvalidEmailFormat() {
-        RequestDTO requestDTO = new RequestDTO(
-            1L,
-            5,
-            "John Doe",
-            "not-an-email" // INVALID
-        );
+        List<RequestItemDTO> items = new ArrayList<>();
+        RequestItemDTO item1 = new RequestItemDTO();
+        item1.setItemId(1L);
+        item1.setQuantity(5);
+        items.add(item1);
+
+        RequestDTO requestDTO = new RequestDTO();
+        requestDTO.setItems(items);
+        requestDTO.setRequesterName("John Doe");
+        requestDTO.setRequesterEmail("not-an-email"); // INVALID
 
         Set<ConstraintViolation<RequestDTO>> violations = validator.validate(requestDTO);
         assertFalse(violations.isEmpty(), "Invalid email format should fail");

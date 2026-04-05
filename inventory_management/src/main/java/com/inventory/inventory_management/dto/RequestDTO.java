@@ -1,22 +1,25 @@
 package com.inventory.inventory_management.dto;
 
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
- * DTO for CREATING a new request
+ * DTO for CREATING a new request with multiple items
  *
  * USAGE:
  * POST /api/requests
  * Body: {
- *   "itemId": 1,
- *   "requestedQuantity": 5,
+ *   "items": [
+ *     { "itemId": 1, "quantity": 5 },
+ *     { "itemId": 3, "quantity": 10 }
+ *   ],
  *   "requesterName": "John Doe",
  *   "requesterEmail": "john@example.com"
  * }
@@ -26,12 +29,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RequestDTO {
 
-    @NotNull(message = "Item ID is required")
-    private Long itemId;
-
-    @NotNull(message = "Requested quantity is required")
-    @Min(value = 1, message = "Requested quantity must be at least 1")
-    private Integer requestedQuantity;
+    @NotEmpty(message = "At least one item is required in the request")
+    private List<RequestItemDTO> items;
 
     @NotBlank(message = "Requester name is required")
     @Size(min = 2, max = 100, message = "Requester name must be between 2 and 100 characters")

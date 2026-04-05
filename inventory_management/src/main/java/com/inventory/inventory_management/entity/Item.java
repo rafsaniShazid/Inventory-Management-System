@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * ITEM ENTITY - YOUR MAIN MODULE (Member 1)!
@@ -106,4 +108,14 @@ public class Item {
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    /**
+     * MANY-TO-MANY: ONE ITEM → MANY REQUEST_ITEMS → MANY REQUESTS
+     * 
+     * An item can be requested by many requests through the RequestItem join table
+     * mappedBy = "item" means RequestItem owns the relationship
+     */
+    @OneToMany(mappedBy = "item")
+    private List<RequestItem> requestItems = new ArrayList<>();
+
 }
