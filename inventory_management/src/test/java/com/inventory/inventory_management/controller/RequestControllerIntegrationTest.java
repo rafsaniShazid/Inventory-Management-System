@@ -49,8 +49,9 @@ class RequestControllerIntegrationTest {
 
         String requestJson = """
                 {
-                  "itemId": %d,
-                  "requestedQuantity": 3,
+                  "items": [
+                    { "itemId": %d, "quantity": 3 }
+                  ],
                   "requesterName": "Jane Doe",
                   "requesterEmail": "jane@example.com"
                 }
@@ -60,7 +61,8 @@ class RequestControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestJson))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.itemId").value(itemId.intValue()))
+                .andExpect(jsonPath("$.items[0].itemId").value(itemId.intValue()))
+                .andExpect(jsonPath("$.items[0].quantity").value(3))
                 .andExpect(jsonPath("$.status").value("PENDING"))
                 .andReturn()
                 .getResponse()
@@ -115,7 +117,7 @@ class RequestControllerIntegrationTest {
     void invalidRequestPayloadIsRejectedByValidation() throws Exception {
         String invalidRequestJson = """
                 {
-                  "requestedQuantity": 0,
+                  "items": [],
                   "requesterName": "",
                   "requesterEmail": "not-an-email"
                 }
@@ -149,8 +151,9 @@ class RequestControllerIntegrationTest {
             throws Exception {
         String requestJson = """
                 {
-                  "itemId": %d,
-                  "requestedQuantity": %d,
+                  "items": [
+                    { "itemId": %d, "quantity": %d }
+                  ],
                   "requesterName": "%s",
                   "requesterEmail": "%s"
                 }
