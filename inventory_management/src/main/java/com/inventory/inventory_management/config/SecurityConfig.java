@@ -71,10 +71,9 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/", "/login").permitAll()
-                        .requestMatchers("/dashboard").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/request", "/my-requests").hasRole("USER")
-                        .requestMatchers("/items", "/categories", "/manage-requests").hasRole("ADMIN")
+                        .requestMatchers("/", "/login", "/dashboard", "/request", "/my-requests", "/items",
+                                "/categories", "/manage-requests")
+                        .permitAll()
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/error").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categories/**")
                         .hasAnyRole("USER", "ADMIN")
@@ -83,7 +82,7 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/requests/**")
                         .hasRole("USER")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/requests/email/**")
-                        .hasAnyRole("USER", "ADMIN")
+                        .hasRole("USER")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/requests/**")
                         .hasAnyRole("USER", "ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/requests/*/review")
