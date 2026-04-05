@@ -29,13 +29,9 @@ import org.springframework.security.web.SecurityFilterChain;
  * - Disables CSRF protection (safe for testing)
  * - Permits all requests (no login needed)
  * 
- * LATER IN PHASE 3 (Your responsibility - Member 1):
- * You'll replace this with REAL security:
- * - JWT token authentication
- * - Role-based access control:
- * * ADMIN can DELETE items
- * * MANAGER can UPDATE stock
- * * USER can only VIEW items
+ * Role-based access control:
+ * - ADMIN manages inventory and reviews requests
+ * - USER can view items and submit requests
  * - Password encryption (BCrypt)
  * 
  * FOR NOW: Just lets you test without authentication errors
@@ -69,14 +65,17 @@ public class SecurityConfig {
             AuthenticationProvider authenticationProvider) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-            .httpBasic(AbstractHttpConfigurer::disable)
-            .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                    .requestMatchers("/", "/login", "/dashboard", "/request", "/my-requests", "/items", "/categories", "/manage-requests").permitAll()
-                    .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/error").permitAll()
+                        .requestMatchers("/", "/login").permitAll()
+                        .requestMatchers("/dashboard").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/request", "/my-requests").hasRole("USER")
+                        .requestMatchers("/items", "/categories", "/manage-requests").hasRole("ADMIN")
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/error").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categories/**")
                         .hasAnyRole("USER", "ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/items/**")

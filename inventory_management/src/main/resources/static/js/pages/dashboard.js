@@ -24,6 +24,8 @@ async function loadDashboard() {
 // ==================== Items Overview Widget ====================
 async function loadItemsOverview() {
     const container = document.getElementById('itemsOverviewContainer');
+    const authUser = typeof getAuthUser === 'function' ? getAuthUser() : null;
+    const canRequestItems = authUser && authUser.role === 'USER';
 
     try {
         showLoading('itemsOverviewLoader');
@@ -59,7 +61,7 @@ async function loadItemsOverview() {
                                     <p class="item-showcase-category">${escapeHtml(item.categoryName || 'Uncategorized')}</p>
                                     <div class="d-flex justify-content-between align-items-center mt-2">
                                         <span class="badge ${stockClass}">Stock: ${item.stockQuantity ?? 0}</span>
-                                        <button class="btn btn-sm btn-outline-primary" onclick="goToRequestItem(${item.itemId})">Request</button>
+                                        ${canRequestItems ? `<button class="btn btn-sm btn-outline-primary" onclick="goToRequestItem(${item.itemId})">Request</button>` : ''}
                                     </div>
                                 </div>
                             </div>
