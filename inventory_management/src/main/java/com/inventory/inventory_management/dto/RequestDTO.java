@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,6 +31,7 @@ import java.util.List;
 public class RequestDTO {
 
     @NotEmpty(message = "At least one item is required in the request")
+    @Valid
     private List<RequestItemDTO> items;
 
     @NotBlank(message = "Requester name is required")
