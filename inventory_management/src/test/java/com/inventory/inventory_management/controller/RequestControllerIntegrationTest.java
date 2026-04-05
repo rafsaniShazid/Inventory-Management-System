@@ -16,6 +16,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.inventory.inventory_management.repository.CategoryRepository;
 import com.inventory.inventory_management.repository.ItemRepository;
+import com.inventory.inventory_management.repository.RequestRepository;
+import com.inventory.inventory_management.entity.Request;
+import com.inventory.inventory_management.entity.RequestStatus;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -27,7 +30,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@WithMockUser(roles = "ADMIN")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class RequestControllerIntegrationTest {
 
@@ -43,7 +45,11 @@ class RequestControllerIntegrationTest {
     @Autowired
     private ItemRepository itemRepository;
 
+    @Autowired
+    private RequestRepository requestRepository;
+
     @Test
+    @WithMockUser(roles = "USER")
     void requestLifecycleWorksThroughHttpLayer() throws Exception {
         Long itemId = createItem("Request Flow Pen", "Pen used for request integration test", 10);
 
@@ -81,7 +87,30 @@ class RequestControllerIntegrationTest {
         mockMvc.perform(get("/api/requests/email/{email}", "jane@example.com"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].requestId").value(requestId.intValue()));
+    }
 
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void adminCanReviewAndDeleteRequests() throws Exception {
+        // Create request as USER (via repository, not API)
+        Category category = categoryRepository.findByCategoryName("Admin Test Category")
+                .orElseGet(() -> {
+                    Category newCategory = new Category();
+                    newCategory.setCategoryName("Admin Test Category");
+                    newCategory.setDescription("Integration test category");
+                    return categoryRepository.save(newCategory);
+                });
+
+        Item item = new Item();
+        item.setItemName("Admin Test Pen");
+        item.setDescription("Pen for admin test");
+        item.setStockQuantity(10);
+        item.setCategory(category);
+        Long itemId = itemRepository.save(item).getItemId();
+
+        Long requestId = createRequestViaRepository(itemId, 3, "Test User", "test@example.com");
+
+        // Admin can review request
         String reviewJson = """
                 {
                   "status": "APPROVED",
@@ -96,12 +125,13 @@ class RequestControllerIntegrationTest {
                 .andExpect(jsonPath("$.status").value("APPROVED"))
                 .andExpect(jsonPath("$.reviewRemarks").value("Approved in integration test"));
 
+        // Verify stock was decreased
         mockMvc.perform(get("/api/items/{id}", itemId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.stockQuantity").value(7));
 
-        Long pendingItemId = createItem("Pending Flow Pen", "Separate item for delete flow", 5);
-        Long pendingRequestId = createRequest(pendingItemId, 1, "John Smith", "john@example.com");
+        // Admin can delete pending requests
+        Long pendingRequestId = createRequestViaRepository(itemId, 1, "Another User", "another@example.com");
 
         mockMvc.perform(delete("/api/requests/{id}", pendingRequestId))
                 .andExpect(status().isOk())
@@ -112,6 +142,7 @@ class RequestControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     void invalidRequestPayloadIsRejectedByValidation() throws Exception {
         String invalidRequestJson = """
                 {
@@ -165,5 +196,16 @@ class RequestControllerIntegrationTest {
                 .getContentAsString();
 
         return objectMapper.readTree(requestResponse).get("requestId").asLong();
+    }
+
+    private Long createRequestViaRepository(Long itemId, int requestedQuantity, String requesterName, String requesterEmail) {
+        Item item = itemRepository.findById(itemId).orElseThrow();
+        Request request = new Request();
+        request.setItem(item);
+        request.setRequestedQuantity(requestedQuantity);
+        request.setRequesterName(requesterName);
+        request.setRequesterEmail(requesterEmail);
+        request.setStatus(RequestStatus.PENDING);
+        return requestRepository.save(request).getRequestId();
     }
 }
