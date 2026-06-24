@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import com.inventory.inventory_management.entity.Category;
 import com.inventory.inventory_management.entity.Item;
 import com.inventory.inventory_management.entity.Request;
+import com.inventory.inventory_management.entity.RequestItem;
 import com.inventory.inventory_management.entity.RequestStatus;
 
 /**
@@ -50,12 +51,17 @@ class DtoMapperTest {
 
         testRequest = new Request();
         testRequest.setRequestId(1L);
-        testRequest.setItem(testItem);
-        testRequest.setRequestedQuantity(5);
         testRequest.setRequesterName("John Doe");
         testRequest.setRequesterEmail("john@example.com");
         testRequest.setStatus(RequestStatus.PENDING);
         testRequest.setRequestedAt(LocalDateTime.now());
+
+        // Create RequestItem with the test item
+        RequestItem requestItem = new RequestItem();
+        requestItem.setRequest(testRequest);
+        requestItem.setItem(testItem);
+        requestItem.setQuantity(5);
+        testRequest.getItems().add(requestItem);
     }
 
     /**
@@ -122,7 +128,7 @@ class DtoMapperTest {
     }
 
     /**
-     * TEST: Request mapping with valid item
+     * TEST: Request mapping with items list
      */
     @Test
     void testToRequestResponseDTO_WithItem() {
@@ -130,9 +136,13 @@ class DtoMapperTest {
 
         assertNotNull(response);
         assertEquals(1L, response.getRequestId());
-        assertEquals(1L, response.getItemId());
-        assertEquals("Blue Pen", response.getItemName());
-        assertEquals(5, response.getRequestedQuantity());
+        assertEquals(1, response.getItems().size());
+        
+        RequestItemDTO itemDto = response.getItems().get(0);
+        assertEquals(1L, itemDto.getItemId());
+        assertEquals("Blue Pen", itemDto.getItemName());
+        assertEquals(5, itemDto.getQuantity());
+        
         assertEquals("John Doe", response.getRequesterName());
         assertEquals("john@example.com", response.getRequesterEmail());
         assertEquals(RequestStatus.PENDING, response.getStatus());
@@ -140,20 +150,20 @@ class DtoMapperTest {
     }
 
     /**
-     * TEST: Request mapping with NULL item (null-safety check)
-     * This verifies the mapper doesn't throw NullPointerException when item is missing
+     * TEST: Request mapping with empty items list (null-safety check)
+     * This verifies the mapper handles requests with no items
      */
     @Test
     void testToRequestResponseDTO_NullItem_Safe() {
-        testRequest.setItem(null);
+        testRequest.getItems().clear();
 
         RequestResponseDTO response = dtoMapper.toRequestResponseDTO(testRequest);
 
         assertNotNull(response);
         assertEquals(1L, response.getRequestId());
-        assertNull(response.getItemId(), "Item ID should be null when item is missing");
-        assertNull(response.getItemName(), "Item name should be null when item is missing");
-        assertEquals(5, response.getRequestedQuantity());
+        assertEquals(0, response.getItems().size());
+        assertEquals("John Doe", response.getRequesterName());
+        assertEquals("john@example.com", response.getRequesterEmail());
         assertEquals(RequestStatus.PENDING, response.getStatus());
     }
 
@@ -167,7 +177,7 @@ class DtoMapperTest {
     }
 
     /**
-     * TEST: Request mapping preserves all review details
+     * TEST: Request mapping preserves all review details with items
      */
     @Test
     void testToRequestResponseDTO_WithReviewDetails() {
@@ -181,5 +191,7 @@ class DtoMapperTest {
         assertEquals(RequestStatus.APPROVED, response.getStatus());
         assertEquals(reviewedAt, response.getReviewedAt());
         assertEquals("Approved - stock available", response.getReviewRemarks());
+        assertEquals(1, response.getItems().size());
+        assertEquals(5, response.getItems().get(0).getQuantity());
     }
 }

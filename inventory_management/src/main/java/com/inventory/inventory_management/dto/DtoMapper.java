@@ -1,10 +1,14 @@
 package com.inventory.inventory_management.dto;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 
 import com.inventory.inventory_management.entity.Category;
 import com.inventory.inventory_management.entity.Item;
 import com.inventory.inventory_management.entity.Request;
+import com.inventory.inventory_management.entity.RequestItem;
 
 /**
  * CENTRALIZED DTO MAPPER
@@ -80,26 +84,23 @@ public class DtoMapper {
 
     /**
      * Convert Request entity to RequestResponseDTO
-     * Includes item name for user-friendly display
-     * Null-safe: handles null item gracefully
+     * Includes the list of requested items for user-friendly display
+     * Null-safe: handles missing item associations gracefully
      */
     public RequestResponseDTO toRequestResponseDTO(Request request) {
         if (request == null) {
             return null;
         }
-        
-        Long itemId = null;
-        String itemName = null;
-        if (request.getItem() != null) {
-            itemId = request.getItem().getItemId();
-            itemName = request.getItem().getItemName();
-        }
-        
+
+        List<RequestItemDTO> items = request.getItems() == null
+                ? Collections.emptyList()
+                : request.getItems().stream()
+                        .map(this::toRequestItemDTO)
+                        .toList();
+
         return new RequestResponseDTO(
                 request.getRequestId(),
-                itemId,
-                itemName,
-                request.getRequestedQuantity(),
+                items,
                 request.getRequesterName(),
                 request.getRequesterEmail(),
                 request.getStatus(),
@@ -107,5 +108,24 @@ public class DtoMapper {
                 request.getReviewedAt(),
                 request.getReviewRemarks()
         );
+    }
+
+    private RequestItemDTO toRequestItemDTO(RequestItem requestItem) {
+        if (requestItem == null) {
+            return null;
+        }
+
+        Long itemId = null;
+        String itemName = null;
+        if (requestItem.getItem() != null) {
+            itemId = requestItem.getItem().getItemId();
+            itemName = requestItem.getItem().getItemName();
+        }
+
+        return new RequestItemDTO(
+                requestItem.getRequestItemId(),
+                itemId,
+                itemName,
+                requestItem.getQuantity());
     }
 }

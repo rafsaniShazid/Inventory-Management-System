@@ -2,13 +2,16 @@ package com.inventory.inventory_management.service;
 
 import com.inventory.inventory_management.dto.DtoMapper;
 import com.inventory.inventory_management.dto.RequestDTO;
+import com.inventory.inventory_management.dto.RequestItemDTO;
 import com.inventory.inventory_management.dto.RequestResponseDTO;
 import com.inventory.inventory_management.dto.ReviewRequestDTO;
 import com.inventory.inventory_management.entity.Item;
 import com.inventory.inventory_management.entity.Request;
+import com.inventory.inventory_management.entity.RequestItem;
 import com.inventory.inventory_management.entity.RequestStatus;
 import com.inventory.inventory_management.exception.ResourceNotFoundException;
 import com.inventory.inventory_management.repository.ItemRepository;
+import com.inventory.inventory_management.repository.RequestItemRepository;
 import com.inventory.inventory_management.repository.RequestRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,11 +45,15 @@ class RequestServiceTest {
     @Mock
     private DtoMapper dtoMapper;
 
+    @Mock
+    private RequestItemRepository requestItemRepository;
+
     @InjectMocks
     private RequestService requestService;
 
     private Item item;
     private Request request;
+    private RequestItem requestItem;
     private RequestDTO requestDTO;
     private RequestResponseDTO responseDTO;
 
@@ -59,15 +66,30 @@ class RequestServiceTest {
 
         request = new Request();
         request.setRequestId(100L);
-        request.setItem(item);
-        request.setRequestedQuantity(5);
         request.setRequesterName("John");
         request.setRequesterEmail("john@example.com");
         request.setStatus(RequestStatus.PENDING);
 
-        requestDTO = new RequestDTO(1L, 5, "John", "john@example.com");
-        responseDTO = new RequestResponseDTO(100L, 1L, "Pen", 5, "John", "john@example.com", RequestStatus.PENDING,
-                null, null, null);
+        requestItem = new RequestItem();
+        requestItem.setRequestItemId(200L);
+        requestItem.setRequest(request);
+        requestItem.setItem(item);
+        requestItem.setQuantity(5);
+        request.getItems().add(requestItem);
+
+        requestDTO = new RequestDTO(
+                List.of(new RequestItemDTO(null, 1L, null, 5)),
+                "John",
+                "john@example.com");
+        responseDTO = new RequestResponseDTO(
+                100L,
+                List.of(new RequestItemDTO(200L, 1L, "Pen", 5)),
+                "John",
+                "john@example.com",
+                RequestStatus.PENDING,
+                null,
+                null,
+                null);
     }
 
     @Test
@@ -79,7 +101,8 @@ class RequestServiceTest {
         RequestResponseDTO result = requestService.submitRequest(requestDTO);
 
         assertNotNull(result);
-        assertEquals(1L, result.getItemId());
+        assertEquals(1, result.getItems().size());
+        assertEquals(1L, result.getItems().get(0).getItemId());
     }
 
     @Test
@@ -95,12 +118,22 @@ class RequestServiceTest {
         when(requestRepository.findById(100L)).thenReturn(Optional.of(request));
         when(itemRepository.save(item)).thenReturn(item);
         when(requestRepository.save(request)).thenReturn(request);
-        when(dtoMapper.toRequestResponseDTO(request)).thenReturn(responseDTO);
+        RequestResponseDTO approvedResponse = new RequestResponseDTO(
+                100L,
+                List.of(new RequestItemDTO(200L, 1L, "Pen", 5)),
+                "John",
+                "john@example.com",
+                RequestStatus.APPROVED,
+                null,
+                null,
+                "ok");
+        when(dtoMapper.toRequestResponseDTO(request)).thenReturn(approvedResponse);
 
         RequestResponseDTO result = requestService.reviewRequest(100L, review);
 
         assertNotNull(result);
         assertEquals(15, item.getStockQuantity());
+        assertEquals(RequestStatus.APPROVED, request.getStatus());
         verify(itemRepository, times(1)).save(item);
         verify(requestRepository, times(1)).save(request);
     }
@@ -110,11 +143,21 @@ class RequestServiceTest {
         ReviewRequestDTO review = new ReviewRequestDTO(RequestStatus.REJECTED, "no");
         when(requestRepository.findById(100L)).thenReturn(Optional.of(request));
         when(requestRepository.save(request)).thenReturn(request);
-        when(dtoMapper.toRequestResponseDTO(request)).thenReturn(responseDTO);
+        RequestResponseDTO rejectedResponse = new RequestResponseDTO(
+                100L,
+                List.of(new RequestItemDTO(200L, 1L, "Pen", 5)),
+                "John",
+                "john@example.com",
+                RequestStatus.REJECTED,
+                null,
+                null,
+                "no");
+        when(dtoMapper.toRequestResponseDTO(request)).thenReturn(rejectedResponse);
 
         requestService.reviewRequest(100L, review);
 
         assertEquals(20, item.getStockQuantity());
+        assertEquals(RequestStatus.REJECTED, request.getStatus());
         verify(itemRepository, never()).save(any(Item.class));
     }
 
@@ -145,7 +188,7 @@ class RequestServiceTest {
 
     @Test
     void reviewRequest_InsufficientStock_Throws() {
-        request.setRequestedQuantity(30);
+        requestItem.setQuantity(30);
         when(requestRepository.findById(100L)).thenReturn(Optional.of(request));
 
         assertThrows(IllegalArgumentException.class,
@@ -157,6 +200,18 @@ class RequestServiceTest {
         when(itemRepository.existsById(9L)).thenReturn(false);
 
         assertThrows(ResourceNotFoundException.class, () -> requestService.getRequestsByItem(9L));
+    }
+
+    @Test
+    void getRequestsByItem_Success() {
+        when(itemRepository.existsById(1L)).thenReturn(true);
+        when(requestItemRepository.findByItemItemId(1L)).thenReturn(List.of(requestItem));
+        when(dtoMapper.toRequestResponseDTO(request)).thenReturn(responseDTO);
+
+        List<RequestResponseDTO> result = requestService.getRequestsByItem(1L);
+
+        assertEquals(1, result.size());
+        assertEquals(100L, result.get(0).getRequestId());
     }
 
     @Test

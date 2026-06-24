@@ -13,6 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import com.inventory.inventory_management.entity.RequestItem;
 
 import com.inventory.inventory_management.repository.CategoryRepository;
 import com.inventory.inventory_management.repository.ItemRepository;
@@ -55,8 +56,9 @@ class RequestControllerIntegrationTest {
 
         String requestJson = """
                 {
-                  "itemId": %d,
-                  "requestedQuantity": 3,
+                  "items": [
+                    { "itemId": %d, "quantity": 3 }
+                  ],
                   "requesterName": "Jane Doe",
                   "requesterEmail": "jane@example.com"
                 }
@@ -66,7 +68,8 @@ class RequestControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestJson))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.itemId").value(itemId.intValue()))
+                .andExpect(jsonPath("$.items[0].itemId").value(itemId.intValue()))
+                .andExpect(jsonPath("$.items[0].quantity").value(3))
                 .andExpect(jsonPath("$.status").value("PENDING"))
                 .andReturn()
                 .getResponse()
@@ -146,7 +149,7 @@ class RequestControllerIntegrationTest {
     void invalidRequestPayloadIsRejectedByValidation() throws Exception {
         String invalidRequestJson = """
                 {
-                  "requestedQuantity": 0,
+                  "items": [],
                   "requesterName": "",
                   "requesterEmail": "not-an-email"
                 }
@@ -180,8 +183,9 @@ class RequestControllerIntegrationTest {
             throws Exception {
         String requestJson = """
                 {
-                  "itemId": %d,
-                  "requestedQuantity": %d,
+                  "items": [
+                    { "itemId": %d, "quantity": %d }
+                  ],
                   "requesterName": "%s",
                   "requesterEmail": "%s"
                 }
@@ -200,12 +204,20 @@ class RequestControllerIntegrationTest {
 
     private Long createRequestViaRepository(Long itemId, int requestedQuantity, String requesterName, String requesterEmail) {
         Item item = itemRepository.findById(itemId).orElseThrow();
+
         Request request = new Request();
-        request.setItem(item);
-        request.setRequestedQuantity(requestedQuantity);
         request.setRequesterName(requesterName);
         request.setRequesterEmail(requesterEmail);
         request.setStatus(RequestStatus.PENDING);
+
+        RequestItem requestItem = new RequestItem();
+        requestItem.setRequest(request);
+        requestItem.setItem(item);
+        requestItem.setQuantity(requestedQuantity);
+
+        request.getItems().add(requestItem);
+
         return requestRepository.save(request).getRequestId();
     }
+
 }

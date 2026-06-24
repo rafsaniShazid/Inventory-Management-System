@@ -1,6 +1,7 @@
 package com.inventory.inventory_management.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.inventory.inventory_management.entity.RequestStatus;
 
@@ -14,9 +15,10 @@ import lombok.NoArgsConstructor;
  * RESPONSE EXAMPLE:
  * {
  *   "requestId": 1,
- *   "itemId": 2,
- *   "itemName": "Blue Ballpoint Pen",
- *   "requestedQuantity": 5,
+ *   "items": [
+ *     { "requestItemId": 1, "itemId": 2, "itemName": "Blue Ballpoint Pen", "quantity": 5 },
+ *     { "requestItemId": 2, "itemId": 8, "itemName": "Notebook", "quantity": 10 }
+ *   ],
  *   "requesterName": "John Doe",
  *   "requesterEmail": "john@example.com",
  *   "status": "PENDING",
@@ -31,9 +33,7 @@ import lombok.NoArgsConstructor;
 public class RequestResponseDTO {
 
     private Long requestId;
-    private Long itemId;
-    private String itemName;
-    private Integer requestedQuantity;
+    private List<RequestItemDTO> items;
     private String requesterName;
     private String requesterEmail;
     private RequestStatus status;

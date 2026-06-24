@@ -23,12 +23,6 @@ import com.inventory.inventory_management.entity.RequestStatus;
 public interface RequestRepository extends JpaRepository<Request, Long> {
 
     /**
-     * Find all requests for a specific item
-     * SQL: SELECT * FROM requests WHERE item_id = ?
-     */
-    List<Request> findByItemItemId(Long itemId);
-
-    /**
      * Find all requests by status (PENDING, APPROVED, REJECTED)
      * SQL: SELECT * FROM requests WHERE status = ?
      */

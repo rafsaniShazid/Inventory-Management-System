@@ -142,8 +142,8 @@ function displayRequests(requests) {
                 <thead class="table-light">
                     <tr>
                         <th>Request ID</th>
-                        <th>Item</th>
-                        <th>Quantity</th>
+                        <th>Items</th>
+                        <th>Total Qty</th>
                         <th>Status</th>
                         <th>Requested</th>
                         <th>Reviewed</th>
@@ -154,8 +154,8 @@ function displayRequests(requests) {
                     ${filtered.map(req => `
                         <tr>
                             <td><small>${req.requestId}</small></td>
-                            <td>${req.itemName || 'N/A'}</td>
-                            <td>${req.requestedQuantity}</td>
+                            <td>${escapeHtml(getRequestItemsSummary(req))}</td>
+                            <td>${getRequestTotalQuantity(req)}</td>
                             <td>
                                 <span class="badge ${getStatusBadgeClass(req.status)}">
                                     ${getStatusLabel(req.status)}
@@ -217,6 +217,24 @@ function setText(elementId, value) {
     }
 }
 
+function getRequestItemsSummary(request) {
+    if (!request || !Array.isArray(request.items) || request.items.length === 0) {
+        return 'N/A';
+    }
+
+    return request.items
+        .map(item => `${item.itemName || `Item #${item.itemId ?? 'Unknown'}`} x${item.quantity ?? 0}`)
+        .join(', ');
+}
+
+function getRequestTotalQuantity(request) {
+    if (!request || !Array.isArray(request.items) || request.items.length === 0) {
+        return 0;
+    }
+
+    return request.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+}
+
 // ==================== Status Filter ====================
 function filterByStatus(status) {
     currentFilter = status;
@@ -235,5 +253,14 @@ function clearError() {
     const errorDiv = document.getElementById('errorMessage');
     errorDiv.classList.add('d-none');
     errorDiv.textContent = '';
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
 }
 

@@ -74,9 +74,9 @@ function renderRequestsTable(requests) {
                 <thead class="table-light">
                     <tr>
                         <th>ID</th>
-                        <th>Item</th>
+                        <th>Items</th>
                         <th>Requester</th>
-                        <th>Quantity</th>
+                        <th>Total Qty</th>
                         <th>Requested</th>
                         <th>Reviewed</th>
                         <th>Remarks</th>
@@ -87,13 +87,13 @@ function renderRequestsTable(requests) {
                     ${requests.map(req => `
                         <tr>
                             <td><small>${req.requestId}</small></td>
-                            <td>${escapeHtml(req.itemName || 'N/A')}</td>
+                            <td>${escapeHtml(getRequestItemsSummary(req))}</td>
                             <td>
                                 <small>${escapeHtml(req.requesterName || 'N/A')}</small>
                                 <br>
                                 <small class="text-muted">${escapeHtml(req.requesterEmail || '-')}</small>
                             </td>
-                            <td>${req.requestedQuantity ?? 0}</td>
+                            <td>${getRequestTotalQuantity(req)}</td>
                             <td><small>${formatDate(req.requestedAt)}</small></td>
                             <td><small>${req.reviewedAt ? formatDate(req.reviewedAt) : '-'}</small></td>
                             <td><small>${escapeHtml(req.reviewRemarks || '-')}</small></td>
@@ -161,6 +161,24 @@ function clearManageRequestsMessages() {
     errorEl.textContent = '';
     successEl.classList.add('d-none');
     successEl.textContent = '';
+}
+
+function getRequestItemsSummary(request) {
+    if (!request || !Array.isArray(request.items) || request.items.length === 0) {
+        return 'N/A';
+    }
+
+    return request.items
+        .map(item => `${item.itemName || `Item #${item.itemId ?? 'Unknown'}`} x${item.quantity ?? 0}`)
+        .join(', ');
+}
+
+function getRequestTotalQuantity(request) {
+    if (!request || !Array.isArray(request.items) || request.items.length === 0) {
+        return 0;
+    }
+
+    return request.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
 }
 
 function escapeHtml(value) {
